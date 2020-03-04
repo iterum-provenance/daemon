@@ -1,0 +1,25 @@
+### Basic http request
+GET http://localhost:3000/dataset1/commit1/banaan.jpg
+
+
+### Retrieve image
+GET http://localhost:3000/file/
+
+### State example
+GET http://localhost:3000/
+
+### Multipart form
+POST http://localhost:3000/
+Content-Type: multipart/form-data; boundary=MyBoundary
+
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="cat.1.jpg"
+Content-Type: image/jpeg
+
+< data/train/cats/cat.1.jpg
+--MyBoundary
+Content-Disposition: form-data; name="ProspectId"
+
+1
+--MyBoundary
+--
