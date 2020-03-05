@@ -882,7 +882,9 @@ dependencies = [
  "async-std",
  "futures",
  "listenfd",
+ "rand",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

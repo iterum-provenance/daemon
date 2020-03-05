@@ -4,6 +4,7 @@ use actix_multipart::Multipart;
 use futures::StreamExt;
 use std::time::{Instant};
 use async_std::prelude::*;
+use std::fs;
 
 use super::config;
 
@@ -34,12 +35,24 @@ pub async fn save_file(config: web::Data<config::Config>, mut payload: Multipart
     Ok(HttpResponse::Ok().into())
 }
 
-pub async fn index(data: web::Data<config::Config>, info: web::Path<(String, String, String)>) -> impl Responder {
-    let string = format!("Serving file with path {}/{}/{}", info.0, info.1, info.2);
-    let app_name = &data.app_name;
-    // let response = format!("Hello {}! id:{}", info.1, info.0);
-    println!("{} {}", app_name, string);
-    HttpResponse::Ok().body(string)
+pub async fn retrieve_file(config: web::Data<config::Config>, info: web::Path<(String, String, String)>) -> HttpResponse {
+    let file_path = format!("{}/{}", &config.storage_path, &info.2);
+
+    // Read file, check if it is available. If it is, return it. Else return a 404.
+    match fs::read(&file_path) {
+        Ok(contents) => {
+            let response = HttpResponse::Ok()
+                .content_type("image/jpeg")
+                .body(contents);
+            println!("{:?}", response);
+            response
+        },
+        Err(error) => {
+            println!("{}", error);
+            HttpResponse::NotFound()
+                .body("Could not find the file")
+        }
+    }
 }
 
 pub fn _index() -> HttpResponse {
