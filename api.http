@@ -23,3 +23,47 @@ Content-Disposition: form-data; name="ProspectId"
 1
 --MyBoundary
 --
+
+### Post new commit
+POST http://localhost:3000/cat_dataset/1/ HTTP/1.1
+content-type: application/json
+
+{
+    "hash": "2",
+    "parent": "1",
+    "branch": "master",
+    "name": "Update 7-3",
+    "desc": "Added extra cat photos",
+    "diff": [
+        {
+            "change_type": "Add",
+            "files": ["cat1.jpg", "cat2.jpg"]
+        }
+    ],
+    "deprecated": false
+}
+
+
+# #[derive(Serialize, Deserialize, Debug)]
+# pub enum ChangeType {
+#     Add,
+#     Remove,
+#     Update
+# }
+
+# #[derive(Serialize, Deserialize, Debug)]
+# pub struct Diff {
+#     pub change_type: ChangeType,
+#     pub files: Vec<String>
+# }
+
+# #[derive(Serialize, Deserialize, Debug)]
+# pub struct Commit {
+#     pub hash: String,
+#     pub parent: String,
+#     pub branch: String,
+#     pub name: String,
+#     pub desc: String,
+#     pub diff: Vec<Diff>,
+#     pub deprecated: bool,
+# }

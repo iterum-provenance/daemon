@@ -1,13 +1,15 @@
-use actix_web::{web, Responder, Error, HttpResponse};
-
+use actix_web::{web, Responder, Error, HttpRequest, HttpResponse, Result};
+use json::JsonValue;
 use actix_multipart::Multipart;
 use futures::StreamExt;
 use std::time::{Instant};
 use async_std::prelude::*;
 use std::fs;
-
 use super::config;
+use super::types;
+use log;
 
+// use types::commit;
 
 pub async fn save_file(config: web::Data<config::Config>, mut payload: Multipart) -> Result<HttpResponse, Error> {
     let now = Instant::now();
@@ -33,6 +35,13 @@ pub async fn save_file(config: web::Data<config::Config>, mut payload: Multipart
     println!("Time to upload file \t{}ms", now.elapsed().as_millis());
 
     Ok(HttpResponse::Ok().into())
+}
+
+pub async fn add_commit(config: web::Data<config::Config>, commit: web::Json<types::commit::Commit>) -> Result<String> {
+
+    log::info!("{:?}", &commit);
+
+    Ok(format!("test"))
 }
 
 pub async fn retrieve_file(config: web::Data<config::Config>, info: web::Path<(String, String, String)>) -> HttpResponse {

@@ -1,4 +1,5 @@
 use actix_web::{web, App, HttpServer};
+use actix_web::middleware::Logger;
 // use serde_json::Result;
 use listenfd::ListenFd;
 
@@ -18,6 +19,7 @@ use types::dataset;
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
+    env_logger::init();
 
     let config = config::Config {
         app_name: String::from("Actix-web"),
@@ -31,31 +33,34 @@ async fn main() -> std::io::Result<()> {
     let config_clone = config.clone();
     let mut server = HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
+            .wrap(Logger::new("%a %{User-Agent}i"))
             .data(config_clone.clone())
             .route("/", web::get().to(handles::_index))
             .route("/", web::post().to(handles::save_file))
+            .route("/{dataset}/{commit}/", web::post().to(handles::add_commit))
+
             .route("/{dataset}/{commit}/{filename}", web::get().to(handles::retrieve_file))
         });
 
     let dataset1 = dataset::Dataset {
-        name: String::from("Cat photos"),
-        path: String::from("cat_photos"),
+        name: String::from("Dog photos"),
+        path: String::from("dog_photos"),
         backend: dataset::Backend::LocalBackend(
             dataset::LocalBackend { 
                 path: String::from("./storage/")
             }
         ),
-        description: String::from("Very important cat photos.")
+        description: String::from("Very important dog photos.")
     };
 
     let dataset_string = serde_json::to_string_pretty(&dataset1).unwrap();
     let path = format!("{}{}.json", &config.dataset_path, dataset1.path);
     write_string_to_file(&path, &dataset_string).unwrap();
 
-    let entries = fs::read_dir(&config.dataset_path).unwrap();
+    // let entries = fs::read_dir(&config.dataset_path).unwrap();
 
-    // let mut datasets: Vec<types::dataset::Dataset>;
-
+    // Parse folder with dataset config files.
     let datasets: Vec<types::dataset::Dataset> = fs::read_dir(&config.dataset_path)?
         .filter_map(Result::ok)
         .map(|e| e.path())
@@ -64,6 +69,10 @@ async fn main() -> std::io::Result<()> {
             let dataset: types::dataset::Dataset = serde_json::from_str(&file).unwrap();
             dataset
         }).collect();
+
+    datasets.iter().for_each(|dataset| println!("{:?}", serde_json::to_string_pretty(&dataset)));
+    
+    // .map(|dataset| println!("{:?}", serde_json::to_string_pretty(&dataset))).collect();
 
     // entries.filter_map(|entry| {
     //     entry.unwrap().path().extension()
