@@ -9,7 +9,7 @@ GET http://localhost:3000/file/
 GET http://localhost:3000/
 
 ### Multipart form
-POST http://localhost:3000/
+POST http://localhost:3000/upload
 Content-Type: multipart/form-data; boundary=MyBoundary
 
 --MyBoundary
@@ -25,7 +25,7 @@ Content-Disposition: form-data; name="ProspectId"
 --
 
 ### Post new commit
-POST http://localhost:3000/cat_dataset/1/ HTTP/1.1
+POST http://localhost:3000/1 HTTP/1.1
 content-type: application/json
 
 {
@@ -41,6 +41,21 @@ content-type: application/json
         }
     ],
     "deprecated": false
+}
+
+### Create new dataset
+POST http://localhost:3000/datasets/ HTTP/1.1
+content-type: application/json
+
+{
+  "name": "Cat photos",
+  "path": "cat_photos",
+  "backend": {
+    "LocalBackend": {
+      "path": "./storage/"
+    }
+  },
+  "description": "Very important cat photos."
 }
 
 
