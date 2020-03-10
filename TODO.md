@@ -10,4 +10,6 @@
 Hoe interacten deze 2?
 * POST commit
 * POST file
+Voor nu:
+* Een post die zowel de Json file, als de files POST.
 
