@@ -1,6 +1,6 @@
 use crate::config;
 use crate::dataset::{Backend, Dataset};
-use actix_web::{error, get, post, web, HttpResponse, Responder};
+use actix_web::{delete, error, get, post, web, HttpResponse, Responder};
 use std::fs;
 use std::fs::File;
 use std::io;
@@ -36,37 +36,33 @@ async fn create_dataset(
     // First create the folder. (does not do anything if the folder already exists)
     fs::create_dir_all(&dataset_path).expect("Could not create directory..");
 
-    if !Path::new(&config_path).exists() {
-        let mut file = File::create(&config_path).unwrap();
-        let dataset_json = serde_json::to_string_pretty(&dataset).unwrap();
-        file.write_all(&dataset_json.as_bytes()).unwrap();
-    } else {
-        debug!("Dataset already exists!");
-    };
-    // debug!("{:?}", entries);
-    // for entry in entries {}
-
-    // for entry in entries {
-    //     let entry = entry?;
-    //     let path = entry.path();
-    //     match path.extension() {
-    //         Some(dataset) => println!("This is a database file"),
-    //         None => println!("This is not a database file"),
-    //     }
-    //     let filename = path.file_name().unwrap();
-    //     println!("Filename: {}", &filename.to_str().unwrap());
-
-    //     // println!("Name: {}", path.unwrap().path().display())
-    //     // println!("Name: {}", path.unwrap().path().display())
-    // }
-
-    // If not, create a new directory for this dataset
-
     // Store the dataset json file in the directory.
+    let response_dataset = if !Path::new(&config_path).exists() {
+        debug!("Creating new dataset.");
+        let mut file = File::create(&config_path).unwrap();
+        let string = serde_json::to_string_pretty(&dataset).unwrap();
+        file.write_all(&string.as_bytes()).unwrap();
+        dataset
+    } else {
+        debug!("Dataset already exists! Returning existing dataset.");
+        let string = fs::read_to_string(&config_path).unwrap();
+        serde_json::from_str(&string).unwrap()
+    };
+
+    HttpResponse::Ok().json(response_dataset)
+}
+
+#[delete("/datasets/{path}/")]
+async fn delete_dataset(
+    _config: web::Data<config::Config>,
+    path: web::Path<String>,
+) -> impl Responder {
+    info!("Deleting dataset with path {:?}", path);
     HttpResponse::Ok()
 }
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(get_file);
     cfg.service(create_dataset);
+    cfg.service(delete_dataset);
 }
