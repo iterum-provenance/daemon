@@ -1,5 +1,6 @@
+use crate::backend::Backend;
 use crate::config;
-use crate::dataset::{Backend, Dataset};
+use crate::dataset::Dataset;
 use actix_web::{delete, error, get, post, web, HttpResponse, Responder};
 use std::fs;
 use std::fs::File;
@@ -26,7 +27,7 @@ async fn create_dataset(
     info!("Creating new dataset with name {:?}", dataset.name);
     let dataset = dataset.into_inner();
     let dataset_path = match &dataset.backend {
-        Backend::LocalBackend { path } => format!("{}{}", path, dataset.path),
+        Backend::Local(backend) => format!("{}{}", backend.path, dataset.path),
         _ => "Not implemented".to_owned(),
     };
     debug!("Path is {}", dataset_path);
@@ -34,7 +35,13 @@ async fn create_dataset(
     debug!("Config file path is {}", config_path);
 
     // First create the folder. (does not do anything if the folder already exists)
-    fs::create_dir_all(&dataset_path).expect("Could not create directory..");
+    fs::create_dir_all(&dataset_path).expect("Could not create dataset directory..");
+    fs::create_dir_all(format!("{}/data", &dataset_path))
+        .expect("Could not create data directory..");
+    fs::create_dir_all(format!("{}/versions", &dataset_path))
+        .expect("Could not create versions directory..");
+    fs::create_dir_all(format!("{}/runs", &dataset_path))
+        .expect("Could not create runs directory..");
 
     // Store the dataset json file in the directory.
     let response_dataset = if !Path::new(&config_path).exists() {

@@ -9,9 +9,11 @@ use std::env;
 // use rand::{thread_rng, Rng};
 // use rand::distributions::Alphanumeric;
 
+mod backend;
 mod commit;
 pub mod config;
 mod dataset;
+mod utils;
 
 #[get("/")]
 pub fn index() -> HttpResponse {

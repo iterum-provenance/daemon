@@ -9,20 +9,68 @@ GET http://localhost:3000/file/
 GET http://localhost:3000/
 
 ### Multipart form
-POST http://localhost:3000/upload
+POST http://localhost:3000/cat_photos/commit
 Content-Type: multipart/form-data; boundary=MyBoundary
+Accept: application/json
+
+preamble which should be ignored...
+--MyBoundary
+Content-Type: application/json
+
+{
+    "hash": "2",
+    "parent": "1",
+    "branch": "master",
+    "name": "Update 7-3",
+    "desc": "Added extra cat photos",
+    "diff": [
+        {
+            "change_type": "Add",
+            "files": ["cat.1.jpg", "cat.2.jpg"]
+        }
+    ],
+    "deprecated": false
+}
 
 --MyBoundary
 Content-Disposition: form-data; name="file"; filename="cat.1.jpg"
 Content-Type: image/jpeg
 
 < data/train/cats/cat.1.jpg
---MyBoundary
-Content-Disposition: form-data; name="ProspectId"
 
-1
 --MyBoundary
---
+Content-Disposition: form-data; name="file"; filename="cat.2.jpg"
+Content-Type: image/jpeg
+
+< data/train/cats/cat.2.jpg
+
+--MyBoundary--
+
+### Multipart form
+POST http://localhost:3000/cat_photos/commit
+Content-Type: multipart/form-data; boundary=MyBoundary
+Accept: application/json
+
+preamble which should be ignored...
+--MyBoundary
+Content-Type: application/json
+
+{
+    "hash": "2",
+    "parent": "1",
+    "branch": "master",
+    "name": "Update 7-3",
+    "desc": "Added extra cat photos",
+    "diff": [
+        {
+            "change_type": "Add",
+            "files": ["cat.1.jpg", "cat.2.jpg"]
+        }
+    ],
+    "deprecated": false
+}
+
+--MyBoundary--
 
 ### Post new commit
 POST http://localhost:3000/1 HTTP/1.1

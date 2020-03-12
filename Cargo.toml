@@ -12,11 +12,13 @@ log = "0.4.0"
 env_logger = "0.7.1"
 dotenv = "0.15.0"
 rand = "0.7.3"
+bytes = "0.5.4"
 
 actix-web = "2.0.0"
 actix-rt = "1.0.0"
 actix-multipart = "0.2.0"
 listenfd = "0.3"
+mime = "0.3.16"
 
 json = "*"
 serde = "1.0.1"
