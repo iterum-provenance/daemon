@@ -29,7 +29,6 @@ async fn create_commit(
         diff: vec![],
         deprecated: false,
     };
-    // let users = User::find_all()?;
     HttpResponse::Ok().json(&commit)
 }
 

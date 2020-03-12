@@ -2,18 +2,30 @@
 extern crate log;
 use actix_web::{error, web, FromRequest, HttpResponse, Responder};
 use actix_web::{get, App, HttpServer};
-// use serde_json::Result;
 use dotenv::dotenv;
 use listenfd::ListenFd;
 use std::env;
-// use rand::{thread_rng, Rng};
-// use rand::distributions::Alphanumeric;
 
 mod backend;
 mod commit;
 pub mod config;
 mod dataset;
 mod utils;
+
+use diesel::prelude::*;
+use diesel::sqlite::SqliteConnection;
+use diesel::Queryable;
+
+#[derive(Queryable)]
+pub struct TestCommit {
+    pub hash: String,
+}
+
+pub fn establish_connection() -> SqliteConnection {
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    SqliteConnection::establish(&database_url)
+        .expect(&format!("Error connecting to {}", database_url))
+}
 
 #[get("/")]
 pub fn index() -> HttpResponse {

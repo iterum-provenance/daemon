@@ -5,3 +5,4 @@
 /storage
 /datasets
 .vscode
+.database.sqlite

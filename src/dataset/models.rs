@@ -10,6 +10,7 @@ pub struct Dataset {
     pub path: String,
     pub backend: Backend,
     pub description: String,
+    pub head: String,
 }
 
 impl Dataset {
