@@ -42,18 +42,18 @@ async fn create_commit_with_data(
 
     // First find the dataset to which the commit is posted.
     let dataset_path = format!("{}{}", &config.storage_path, dataset_string);
-    let dataset = Dataset::read_from_path(&dataset_path).unwrap();
+    let dataset = Dataset::read_from_path(&dataset_path)
+        .expect("Something went wrong reading the dataset file..");
     debug!("{:?}", dataset);
 
     // iterate over multipart stream
     let now = Instant::now();
+    let temp_path = format!("./tmp/");
+    fs::create_dir_all(&temp_path).expect("Could not create temporary file directory.");
+
     while let Some(item) = payload.next().await {
         let mut field = item?;
         let content_type = field.content_type();
-        debug!("Received content type: {}", content_type);
-
-        let temp_path = format!("./tmp/");
-        fs::create_dir_all(&temp_path).expect("Could not create temporary file directory.");
 
         match (content_type.type_(), content_type.subtype()) {
             (mime::APPLICATION, mime::JSON) => {
@@ -98,6 +98,7 @@ async fn create_commit_with_data(
         .backend
         .store_commit(&dataset, "./tmp/".to_string())
         .unwrap();
+
     Ok(HttpResponse::Ok().into())
 }
 
