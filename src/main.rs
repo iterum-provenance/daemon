@@ -1,31 +1,23 @@
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
 use actix_web::{error, web, FromRequest, HttpResponse, Responder};
 use actix_web::{get, App, HttpServer};
 use dotenv::dotenv;
 use listenfd::ListenFd;
 use std::env;
 
+mod api_error;
 mod backend;
 mod commit;
-pub mod config;
+mod config;
 mod dataset;
+mod db;
+mod schema;
 mod utils;
-
-use diesel::prelude::*;
-use diesel::sqlite::SqliteConnection;
-use diesel::Queryable;
-
-#[derive(Queryable)]
-pub struct TestCommit {
-    pub hash: String,
-}
-
-pub fn establish_connection() -> SqliteConnection {
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    SqliteConnection::establish(&database_url)
-        .expect(&format!("Error connecting to {}", database_url))
-}
 
 #[get("/")]
 pub fn index() -> HttpResponse {
@@ -46,6 +38,8 @@ pub fn index() -> HttpResponse {
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     env_logger::init();
+
+    db::init();
 
     let mut listenfd = ListenFd::from_env();
 

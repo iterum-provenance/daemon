@@ -22,14 +22,40 @@ async fn create_commit(
 
     let commit = Commit {
         hash: "".to_owned(),
-        parent: String::from(""),
+        parent: None,
         branch: String::from("master"),
-        name: String::from("eerste_commit"),
-        desc: String::from("Dit is een commit van een dataset"),
-        diff: vec![],
-        deprecated: false,
+        name: Some(String::from("eerste_commit")),
+        description: Some(String::from("Dit is een commit van een dataset")),
+        // diff: vec![],
+        deprecated: None,
     };
     HttpResponse::Ok().json(&commit)
+}
+
+#[post("/{dataset}/test")]
+async fn create_commit_test(
+    _config: web::Data<config::Config>,
+    dataset: web::Path<String>,
+    commit: web::Json<Commit>,
+) -> impl Responder {
+    info!("Posting commit to dataset {}", &dataset);
+
+    let commit = commit.into_inner();
+    // let commit = Commit {
+    //     hash: "".to_owned(),
+    //     parent: None,
+    //     branch: String::from("master"),
+    //     name: Some(String::from("eerste_commit")),
+    //     description: Some(String::from("Dit is een commit van een dataset")),
+    //     // diff: vec![],
+    //     deprecated: None,
+    // };
+    // match Commit::create(commit.clone()) {
+    //     Ok(commit) => HttpResponse::Ok().json(&commit),
+    //     Err(e) => HttpResponse::Conflict().body(e.message),
+    // }
+    HttpResponse::Ok()
+    // _commit.into_inner().create();
 }
 
 #[post("/{dataset}/commit")]
@@ -103,5 +129,6 @@ async fn create_commit_with_data(
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create_commit);
+    cfg.service(create_commit_test);
     cfg.service(create_commit_with_data);
 }

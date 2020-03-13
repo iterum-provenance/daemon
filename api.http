@@ -108,3 +108,16 @@ content-type: application/json
 
 ### Delete dataset
 DELETE http://localhost:3000/datasets/cat_photos/ HTTP/1.1
+
+### Post new commit
+POST http://localhost:3000/cat_photos/test HTTP/1.1
+content-type: application/json
+
+{
+    "hash": "3",
+    "parent": "1",
+    "branch": "master",
+    "name": "Update 7-3",
+    "description": "Added extra cat photos",
+    "deprecated": "yesyeay"
+}
