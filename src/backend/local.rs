@@ -9,6 +9,14 @@ pub struct Local {
     pub path: String,
 }
 
+impl Local {
+    pub fn new(path: &String) -> Local {
+        Local {
+            path: path.to_string(),
+        }
+    }
+}
+
 impl Storable for Local {
     fn store_commit(&self, dataset: &Dataset, path: String) -> Result<(), std::io::Error> {
         debug!("Storing commit in backend.");

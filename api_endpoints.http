@@ -1,0 +1,30 @@
+@address = http://localhost:3000
+@dataset_path = test_dataset
+@commit_hash = initial_commit
+
+### Delete dataset
+DELETE {{address}}/{{dataset_path}} HTTP/1.1
+
+### Get dataset
+GET {{address}}/{{dataset_path}} HTTP/1.1
+
+### Create new dataset
+POST {{address}}/ HTTP/1.1
+content-type: application/json
+
+{
+  "name": "Test dataset",
+  "path": "{{dataset_path}}",
+  "backend": {
+    "Local": {
+      "path": "./storage/"
+    }
+  },
+  "description": "This dataset contains test images!"
+}
+
+### Get version tree
+GET {{address}}/{{dataset_path}}/vtree HTTP/1.1
+
+### Get a commit tree
+GET {{address}}/{{dataset_path}}/commit/{{commit_hash}} HTTP/1.1

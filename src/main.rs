@@ -4,14 +4,16 @@ use actix_web::{error, web, FromRequest, HttpResponse, Responder};
 use actix_web::{get, App, HttpServer};
 use dotenv::dotenv;
 use listenfd::ListenFd;
+use std::collections::HashMap;
 use std::env;
+use std::fs::File;
+use std::io::{Read, Write};
 
 mod backend;
 mod commit;
 pub mod config;
 mod dataset;
 mod utils;
-mod version_tree;
 
 #[get("/")]
 pub fn index() -> HttpResponse {
@@ -41,6 +43,13 @@ async fn main() -> std::io::Result<()> {
         dataset_path: String::from("./datasets/"),
     };
     std::fs::create_dir_all(&config.storage_path).unwrap();
+
+    dataset::Dataset::new(
+        &"New dataset".to_string(),
+        &"new_dataset".to_string(),
+        backend::Backend::Local(backend::local::Local::new(&"./storage/".to_string())),
+        &"random description".to_string(),
+    );
 
     let config_clone = config.clone();
     let mut server = HttpServer::new(move || {

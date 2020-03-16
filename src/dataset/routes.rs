@@ -1,12 +1,23 @@
+use crate::backend::storable::Storable;
 use crate::backend::Backend;
+use crate::commit::ChangeType;
+use crate::commit::Commit;
 use crate::config;
 use crate::dataset::Dataset;
+use actix_multipart::Multipart;
 use actix_web::{delete, error, get, post, web, HttpResponse, Responder};
+use actix_web::{Error, Result};
+use async_std::prelude::*;
+use bytes::Bytes;
+use futures::StreamExt;
 use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::{Read, Write};
+use std::time::Instant;
+
 use std::path::Path;
+
 // use async_std::prelude::*;
 
 #[get("/{dataset}/{commit}/{file}")]
@@ -19,57 +30,69 @@ async fn get_file(
     HttpResponse::Ok()
 }
 
-#[post("/datasets/")]
+#[post("/")]
 async fn create_dataset(
     _config: web::Data<config::Config>,
     dataset: web::Json<Dataset>,
 ) -> impl Responder {
     info!("Creating new dataset with name {:?}", dataset.name);
     let dataset = dataset.into_inner();
-    let dataset_path = match &dataset.backend {
-        Backend::Local(backend) => format!("{}{}", backend.path, dataset.path),
-        _ => "Not implemented".to_owned(),
-    };
-    debug!("Path is {}", dataset_path);
-    let config_path = format!("{}/dataset.json", dataset_path);
-    debug!("Config file path is {}", config_path);
 
-    // First create the folder. (does not do anything if the folder already exists)
-    fs::create_dir_all(&dataset_path).expect("Could not create dataset directory..");
-    fs::create_dir_all(format!("{}/data", &dataset_path))
-        .expect("Could not create data directory..");
-    fs::create_dir_all(format!("{}/versions", &dataset_path))
-        .expect("Could not create versions directory..");
-    fs::create_dir_all(format!("{}/runs", &dataset_path))
-        .expect("Could not create runs directory..");
+    let constructed_dataset = Dataset::new(
+        &dataset.name,
+        &dataset.path,
+        dataset.backend,
+        &dataset.description,
+    );
 
-    // Store the dataset json file in the directory.
-    let response_dataset = if !Path::new(&config_path).exists() {
-        debug!("Creating new dataset.");
-        let mut file = File::create(&config_path).unwrap();
-        let string = serde_json::to_string_pretty(&dataset).unwrap();
-        file.write_all(&string.as_bytes()).unwrap();
-        dataset
-    } else {
-        debug!("Dataset already exists! Returning existing dataset.");
-        let string = fs::read_to_string(&config_path).unwrap();
-        serde_json::from_str(&string).unwrap()
-    };
-
-    HttpResponse::Ok().json(response_dataset)
+    HttpResponse::Ok().json(constructed_dataset)
 }
 
-#[delete("/datasets/{path}/")]
+#[delete("/{dataset}")]
 async fn delete_dataset(
     _config: web::Data<config::Config>,
     path: web::Path<String>,
 ) -> impl Responder {
     info!("Deleting dataset with path {:?}", path);
-    HttpResponse::Ok()
+
+    let dataset_path = format!("./storage/{}", path);
+    if Path::new(&dataset_path).exists() {
+        fs::remove_dir_all(&dataset_path).unwrap();
+        HttpResponse::Ok().finish()
+    } else {
+        HttpResponse::NotFound().finish()
+    }
+}
+
+#[get("/{dataset}")]
+async fn get_dataset(
+    _config: web::Data<config::Config>,
+    path: web::Path<String>,
+) -> impl Responder {
+    info!("Getting dataset with path {:?}", path);
+
+    let dataset_path = format!("./storage/{}/dataset.json", path);
+    if Path::new(&dataset_path).exists() {
+        let string = fs::read_to_string(&dataset_path).unwrap();
+        let object: Dataset = serde_json::from_str(&string).unwrap();
+        HttpResponse::Ok().json(object)
+    } else {
+        HttpResponse::NotFound().finish()
+    }
+}
+
+#[get("/{dataset}/vtree")]
+async fn get_vtree(_config: web::Data<config::Config>, path: web::Path<String>) -> impl Responder {
+    info!("Getting vtree from dataset with path {:?}", path);
+    match Dataset::get_by_path(&path) {
+        Ok(dataset) => HttpResponse::Ok().json(dataset.get_vtree().unwrap()),
+        _ => HttpResponse::NotFound().finish(),
+    }
 }
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(get_file);
-    cfg.service(create_dataset);
     cfg.service(delete_dataset);
+    cfg.service(get_dataset);
+    cfg.service(create_dataset);
+    cfg.service(get_vtree);
 }

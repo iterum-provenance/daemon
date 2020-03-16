@@ -4,7 +4,7 @@ use crate::commit::Commit;
 use crate::config;
 use crate::dataset::Dataset;
 use actix_multipart::Multipart;
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpResponse, Responder};
 use actix_web::{Error, Result};
 use async_std::prelude::*;
 use bytes::Bytes;
@@ -12,24 +12,19 @@ use futures::StreamExt;
 use std::fs;
 use std::time::Instant;
 
-#[post("/{dataset}/blablabla")]
-async fn create_commit(
+#[get("/{dataset}/commit/{commit}")]
+async fn get_commit(
     _config: web::Data<config::Config>,
-    dataset: web::Path<String>,
-    _commit: web::Json<Commit>,
+    path: web::Path<(String, String)>,
 ) -> impl Responder {
-    info!("Posting commit to dataset {}", &dataset);
-
-    let commit = Commit {
-        hash: "".to_owned(),
-        parent: String::from(""),
-        branch: String::from("master"),
-        name: String::from("eerste_commit"),
-        desc: String::from("Dit is een commit van een dataset"),
-        diff: vec![],
-        deprecated: false,
-    };
-    HttpResponse::Ok().json(&commit)
+    info!("Getting commit from dataset with path {:?}", path.0);
+    match Dataset::get_by_path(&path.0) {
+        Ok(dataset) => match dataset.get_commit(&path.1) {
+            Ok(commit) => HttpResponse::Ok().json(commit),
+            Err(e) => HttpResponse::NotFound().finish(),
+        },
+        _ => HttpResponse::NotFound().finish(),
+    }
 }
 
 #[post("/{dataset}/commit")]
@@ -103,6 +98,7 @@ async fn create_commit_with_data(
 }
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(create_commit);
+    // cfg.service(create_commit);
     cfg.service(create_commit_with_data);
+    cfg.service(get_commit);
 }
