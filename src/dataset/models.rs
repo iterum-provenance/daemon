@@ -28,7 +28,7 @@ pub struct VersionTreeNode {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct VersionTree {
     pub tree: HashMap<String, VersionTreeNode>,
-    pub branches: HashMap<String, Branch>,
+    pub branches: HashMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -145,6 +145,8 @@ impl Dataset {
             .expect("Could not create data directory..");
         fs::create_dir_all(format!("{}/versions", &dataset_path))
             .expect("Could not create versions directory..");
+        fs::create_dir_all(format!("{}/branches", &dataset_path))
+            .expect("Could not create branches directory..");
         fs::create_dir_all(format!("{}/runs", &dataset_path))
             .expect("Could not create runs directory..");
 
@@ -173,15 +175,22 @@ impl Dataset {
             deprecated: false,
         };
 
+        let branch = Branch {
+            hash: initial_branch_hash.clone(),
+            name: "master".to_string(),
+            head: initial_commit_hash.clone(),
+        };
+
+        let branch_string = serde_json::to_string_pretty(&branch).unwrap();
+        let mut branch_file = File::create(format!(
+            "{}/branches/{}.json",
+            dataset_path, initial_branch_hash
+        ))
+        .unwrap();
+        branch_file.write_all(&branch_string.as_bytes()).unwrap();
+
         let mut branches_map = HashMap::new();
-        branches_map.insert(
-            initial_branch_hash.clone(),
-            Branch {
-                hash: initial_branch_hash.clone(),
-                name: "master".to_string(),
-                head: initial_commit_hash.clone(),
-            },
-        );
+        branches_map.insert(initial_branch_hash.clone(), "master".to_string());
         let mut vtree_map = HashMap::new();
         vtree_map.insert(
             initial_commit_hash,
