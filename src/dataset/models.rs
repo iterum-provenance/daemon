@@ -1,6 +1,7 @@
 use crate::backend::Backend;
 use crate::commit;
 use crate::commit::{ChangeType, Commit};
+use crate::dataset::error::DatasetError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
@@ -47,51 +48,60 @@ impl Dataset {
         Ok(item)
     }
 
-    pub fn add_commit(&self, commit: &commit::Commit) -> Result<(), Box<Error>> {
+    fn check_if_commit_valid(&self, commit: &commit::Commit) -> bool {
+        let version_tree = self.get_vtree().unwrap();
+        match &commit.parent {
+            Some(parent) => {
+                debug!("The commit has a parent.");
+                // If the parent is present in the tree, the commit can be added.
+                if version_tree.tree.contains_key(parent)
+                    && version_tree.branches.contains_key(&commit.branch)
+                {
+                    // But first check if the branch is also present in the dataset.
+                    true
+                } else {
+                    false
+                }
+            }
+            None => {
+                debug!("The commit has no parent. Only the root node can exist in this state.");
+                false
+            }
+        }
+    }
+
+    pub fn add_commit(&self, commit: &commit::Commit) -> Result<(), DatasetError> {
         let dataset_path = match &self.backend {
             Backend::Local(backend) => format!("{}{}", backend.path, self.path),
             _ => panic!("Backend not implemented"),
         };
 
         // Create commit file
-        let commit_string = serde_json::to_string_pretty(&commit).unwrap();
-        let mut commit_file =
-            File::create(format!("{}/versions/{}.json", dataset_path, commit.hash)).unwrap();
-        commit_file.write_all(&commit_string.as_bytes()).unwrap();
 
         // Update version tree
         // First check if the parent of the commit is actually present. If not, the commit is invalid.
-        let mut version_tree = self.get_vtree().unwrap();
-        // match &commit.parent {
-        //     Some(parent) => {
-        //         debug!("The commit has a parent.");
-        //         if version_tree.tree.contains_key(parent) {
-        //             // If the parent is present in the tree, the commit can be added.
-        //             // But first check if the branch is also present in the dataset.
-        //             if version_tree.branches.contains_key(&commit.branch) {
-
-        //             }
-        //         }
-        //     }
-        //     None => {
-        //         debug!("The commit has no parent. Only the root node can exist in this state.");
-        //     }
-        // }
-
-        version_tree.tree.insert(
-            commit.hash.clone(),
-            VersionTreeNode {
-                name: "".to_string(),
-                branch: commit.branch.clone(),
-                children: vec![],
-                parent: None,
-            },
-        );
-        let vtree_string = serde_json::to_string_pretty(&version_tree).unwrap();
-        let mut vtree_file = File::create(format!("{}/vtree.json", dataset_path)).unwrap();
-        vtree_file.write_all(&vtree_string.as_bytes()).unwrap();
-
-        Ok(())
+        if self.check_if_commit_valid(&commit) {
+            let mut version_tree = self.get_vtree().unwrap();
+            let commit_string = serde_json::to_string_pretty(&commit).unwrap();
+            let mut commit_file =
+                File::create(format!("{}/versions/{}.json", dataset_path, commit.hash)).unwrap();
+            commit_file.write_all(&commit_string.as_bytes()).unwrap();
+            version_tree.tree.insert(
+                commit.hash.clone(),
+                VersionTreeNode {
+                    name: "".to_string(),
+                    branch: commit.branch.clone(),
+                    children: vec![],
+                    parent: None,
+                },
+            );
+            let vtree_string = serde_json::to_string_pretty(&version_tree).unwrap();
+            let mut vtree_file = File::create(format!("{}/vtree.json", dataset_path)).unwrap();
+            vtree_file.write_all(&vtree_string.as_bytes()).unwrap();
+            Ok(())
+        } else {
+            Err(DatasetError::new(format!("Commit was not valid.")))
+        }
     }
 
     pub fn get_vtree(&self) -> Result<VersionTree, Box<Error>> {
@@ -136,6 +146,13 @@ impl Dataset {
         let string = fs::read_to_string(&config_path)?;
         let dataset: Dataset = serde_json::from_str(&string)?;
         Ok(dataset)
+    }
+
+    pub fn get_path(&self) -> String {
+        match &self.backend {
+            Backend::Local(backend) => format!("{}{}", backend.path, self.path),
+            _ => panic!("Backend not implemented"),
+        }
     }
 
     pub fn new(name: &String, path: &String, backend: Backend, description: &String) -> Dataset {

@@ -91,13 +91,19 @@ async fn create_commit_with_data(
     // Parse the files stored in the temporary folder. Return the commit data structure.
     let commit = dataset
         .backend
-        .store_commit_files(&dataset, "./tmp/".to_string())
+        .get_commit_from_file("./tmp/".to_string())
         .unwrap();
 
+    dataset
+        .backend
+        .store_committed_files(&dataset, "./tmp/".to_string())
+        .unwrap();
     // Now add the commit to the dataset.
-    dataset.add_commit(&commit).unwrap();
 
-    Ok(HttpResponse::Ok().into())
+    match dataset.add_commit(&commit) {
+        Ok(()) => Ok(HttpResponse::Ok().json(&commit)),
+        Err(e) => Ok(HttpResponse::Conflict().json(e)),
+    }
 }
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {

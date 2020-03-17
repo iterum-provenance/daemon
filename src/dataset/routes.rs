@@ -20,14 +20,23 @@ use std::path::Path;
 
 // use async_std::prelude::*;
 
-#[get("/{dataset}/{commit}/{file}")]
+#[get("/{dataset}/file/{commit}/{file}")]
 async fn get_file(
     _config: web::Data<config::Config>,
     info: web::Path<(String, String, String)>,
 ) -> impl Responder {
     info!("Retrieving file {} from {}:{}", info.2, info.0, info.1);
 
-    HttpResponse::Ok()
+    let dataset = Dataset::get_by_path(&info.0).unwrap();
+    let file_path = format!("{}/data/{}/{}", dataset.get_path(), &info.2, &info.1);
+    debug!("Reading path {}", file_path);
+    match fs::read(&file_path) {
+        Ok(contents) => {
+            let response = HttpResponse::Ok().content_type("image/jpeg").body(contents);
+            response
+        }
+        Err(error) => HttpResponse::NotFound().body("Could not find the file"),
+    }
 }
 
 #[post("/")]
@@ -111,4 +120,5 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create_dataset);
     cfg.service(get_vtree);
     cfg.service(get_branch);
+    cfg.service(get_file);
 }

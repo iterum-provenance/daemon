@@ -18,11 +18,7 @@ impl Local {
 }
 
 impl Storable for Local {
-    fn store_commit_files(
-        &self,
-        dataset: &Dataset,
-        path: String,
-    ) -> Result<Commit, std::io::Error> {
+    fn store_committed_files(&self, dataset: &Dataset, path: String) -> Result<(), std::io::Error> {
         debug!("Storing commit in backend.");
         debug!("Reading path {}.", path);
 
@@ -52,6 +48,13 @@ impl Storable for Local {
                 ChangeType::Update => {}
             }
         }
+
+        Ok(())
+    }
+    fn get_commit_from_file(&self, path: String) -> Result<Commit, std::io::Error> {
+        let config_path = format!("{}commit.json", path);
+        let commit_string = fs::read_to_string(config_path)?;
+        let commit: Commit = serde_json::from_str(&commit_string)?;
 
         Ok(commit)
     }

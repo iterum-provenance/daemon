@@ -44,13 +44,6 @@ async fn main() -> std::io::Result<()> {
     };
     std::fs::create_dir_all(&config.storage_path).unwrap();
 
-    dataset::Dataset::new(
-        &"New dataset".to_string(),
-        &"new_dataset".to_string(),
-        backend::Backend::Local(backend::local::Local::new(&"./storage/".to_string())),
-        &"random description".to_string(),
-    );
-
     let config_clone = config.clone();
     let mut server = HttpServer::new(move || {
         App::new()
