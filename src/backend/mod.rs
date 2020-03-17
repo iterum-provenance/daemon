@@ -1,3 +1,4 @@
+use crate::commit::Commit;
 use crate::dataset::Dataset;
 use local::Local;
 use serde::{Deserialize, Serialize};
@@ -14,9 +15,13 @@ pub enum Backend {
 }
 
 impl Storable for Backend {
-    fn store_commit(&self, dataset: &Dataset, path: String) -> Result<(), std::io::Error> {
+    fn store_commit_files(
+        &self,
+        dataset: &Dataset,
+        path: String,
+    ) -> Result<Commit, std::io::Error> {
         match self {
-            Backend::Local(backend) => backend.store_commit(dataset, path),
+            Backend::Local(backend) => backend.store_commit_files(dataset, path),
             _ => panic!("Backend not implemented!"),
         }
     }

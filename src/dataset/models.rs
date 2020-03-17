@@ -47,7 +47,7 @@ impl Dataset {
         Ok(item)
     }
 
-    pub fn add_commit(&self, tmp_path: &String, commit: commit::Commit) -> commit::Commit {
+    pub fn add_commit(&self, commit: &commit::Commit) -> Result<(), Box<Error>> {
         let dataset_path = match &self.backend {
             Backend::Local(backend) => format!("{}{}", backend.path, self.path),
             _ => panic!("Backend not implemented"),
@@ -60,7 +60,24 @@ impl Dataset {
         commit_file.write_all(&commit_string.as_bytes()).unwrap();
 
         // Update version tree
+        // First check if the parent of the commit is actually present. If not, the commit is invalid.
         let mut version_tree = self.get_vtree().unwrap();
+        // match &commit.parent {
+        //     Some(parent) => {
+        //         debug!("The commit has a parent.");
+        //         if version_tree.tree.contains_key(parent) {
+        //             // If the parent is present in the tree, the commit can be added.
+        //             // But first check if the branch is also present in the dataset.
+        //             if version_tree.branches.contains_key(&commit.branch) {
+
+        //             }
+        //         }
+        //     }
+        //     None => {
+        //         debug!("The commit has no parent. Only the root node can exist in this state.");
+        //     }
+        // }
+
         version_tree.tree.insert(
             commit.hash.clone(),
             VersionTreeNode {
@@ -74,29 +91,7 @@ impl Dataset {
         let mut vtree_file = File::create(format!("{}/vtree.json", dataset_path)).unwrap();
         vtree_file.write_all(&vtree_string.as_bytes()).unwrap();
 
-        // // Create the new files wherever necessary
-        for item in &commit.diff {
-            match item.change_type {
-                ChangeType::Add => {
-                    debug!("Adding files with names:");
-                    for file in &item.files {
-                        let tmp_file_path = format!("{}{}", &tmp_path, file);
-                        debug!("Pulling file from: {}", tmp_file_path);
-
-                        let file_dir = format!("{}/data/{}", dataset_path, file);
-                        fs::create_dir_all(&file_dir)
-                            .expect("Could not create data file directory.");
-
-                        let file_path = format!("{}/{}", &file_dir, commit.hash);
-                        debug!("Storing file in: {}", file_path);
-                        fs::copy(&tmp_file_path, &file_path).unwrap();
-                    }
-                }
-                ChangeType::Remove => {}
-                ChangeType::Update => {}
-            }
-        }
-        commit
+        Ok(())
     }
 
     pub fn get_vtree(&self) -> Result<VersionTree, Box<Error>> {
@@ -107,6 +102,19 @@ impl Dataset {
         let string = fs::read_to_string(vtree_path)?;
         let vtree = serde_json::from_str(&string)?;
         Ok(vtree)
+    }
+
+    pub fn get_branch(&self, branch_hash: &String) -> Result<Branch, Box<Error>> {
+        let branch_path = match &self.backend {
+            Backend::Local(backend) => format!(
+                "{}{}/branches/{}.json",
+                backend.path, self.path, branch_hash
+            ),
+            _ => panic!("Backend not implemented"),
+        };
+        let string = fs::read_to_string(branch_path)?;
+        let branch = serde_json::from_str(&string)?;
+        Ok(branch)
     }
 
     pub fn get_commit(&self, commit_hash: &String) -> Result<Commit, Box<Error>> {

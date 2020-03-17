@@ -18,20 +18,24 @@ impl Local {
 }
 
 impl Storable for Local {
-    fn store_commit(&self, dataset: &Dataset, path: String) -> Result<(), std::io::Error> {
+    fn store_commit_files(
+        &self,
+        dataset: &Dataset,
+        path: String,
+    ) -> Result<Commit, std::io::Error> {
         debug!("Storing commit in backend.");
         debug!("Reading path {}.", path);
 
         let config_path = format!("{}commit.json", path);
-        let commit_string = fs::read_to_string(config_path).unwrap();
-        let commit: Commit = serde_json::from_str(&commit_string).unwrap();
+        let commit_string = fs::read_to_string(config_path)?;
+        let commit: Commit = serde_json::from_str(&commit_string)?;
 
         // // Create the new files wherever necessary
-        for item in commit.diff {
+        for item in &commit.diff {
             match item.change_type {
                 ChangeType::Add => {
                     debug!("Adding files with names:");
-                    for file in item.files {
+                    for file in &item.files {
                         let tmp_file_path = format!("{}{}", &path, file);
                         debug!("Pulling file from: {}", tmp_file_path);
 
@@ -41,7 +45,7 @@ impl Storable for Local {
 
                         let file_path = format!("{}/{}", &file_dir, commit.hash);
                         debug!("Storing file in: {}", file_path);
-                        fs::copy(&tmp_file_path, &file_path).unwrap();
+                        fs::copy(&tmp_file_path, &file_path)?;
                     }
                 }
                 ChangeType::Remove => {}
@@ -49,6 +53,6 @@ impl Storable for Local {
             }
         }
 
-        Ok(())
+        Ok(commit)
     }
 }

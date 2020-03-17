@@ -88,11 +88,14 @@ async fn create_commit_with_data(
     }
     debug!("Time to upload file \t{}ms", now.elapsed().as_millis());
 
-    // Now store the data in the actual backend.
-    dataset
+    // Parse the files stored in the temporary folder. Return the commit data structure.
+    let commit = dataset
         .backend
-        .store_commit(&dataset, "./tmp/".to_string())
+        .store_commit_files(&dataset, "./tmp/".to_string())
         .unwrap();
+
+    // Now add the commit to the dataset.
+    dataset.add_commit(&commit).unwrap();
 
     Ok(HttpResponse::Ok().into())
 }

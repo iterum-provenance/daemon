@@ -1,6 +1,7 @@
 @address = http://localhost:3000
 @dataset_path = test_dataset
 @commit_hash = initial_commit
+@branch_hash = initial_branch
 
 ### Delete dataset
 DELETE {{address}}/{{dataset_path}} HTTP/1.1
@@ -26,5 +27,8 @@ content-type: application/json
 ### Get version tree
 GET {{address}}/{{dataset_path}}/vtree HTTP/1.1
 
-### Get a commit tree
+### Get a commit
 GET {{address}}/{{dataset_path}}/commit/{{commit_hash}} HTTP/1.1
+
+### Get a branch
+GET {{address}}/{{dataset_path}}/branch/{{branch_hash}} HTTP/1.1

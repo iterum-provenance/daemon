@@ -90,9 +90,25 @@ async fn get_vtree(_config: web::Data<config::Config>, path: web::Path<String>) 
     }
 }
 
+#[get("/{dataset}/branch/{branch_hash}")]
+async fn get_branch(
+    _config: web::Data<config::Config>,
+    path: web::Path<(String, String)>,
+) -> impl Responder {
+    info!("Getting branch from dataset with path {:?}", path.0);
+    match Dataset::get_by_path(&path.0) {
+        Ok(dataset) => match dataset.get_branch(&path.1) {
+            Ok(commit) => HttpResponse::Ok().json(commit),
+            Err(e) => HttpResponse::NotFound().finish(),
+        },
+        _ => HttpResponse::NotFound().finish(),
+    }
+}
+
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(delete_dataset);
     cfg.service(get_dataset);
     cfg.service(create_dataset);
     cfg.service(get_vtree);
+    cfg.service(get_branch);
 }
