@@ -138,13 +138,13 @@ impl Dataset {
         Ok(commit)
     }
 
-    pub fn get_by_path(path: &String) -> Result<Dataset, Box<dyn Error>> {
-        debug!("Getting dataset by path: {}", path);
-        let config_path = format!("./storage/{}/dataset.json", path);
-        let string = fs::read_to_string(&config_path)?;
-        let dataset: Dataset = serde_json::from_str(&string)?;
-        Ok(dataset)
-    }
+    // pub fn get_by_path(path: &String) -> Result<Dataset, Box<dyn Error>> {
+    //     debug!("Getting dataset by path: {}", path);
+    //     let config_path = format!("./storage/{}/dataset.json", path);
+    //     let string = fs::read_to_string(&config_path)?;
+    //     let dataset: Dataset = serde_json::from_str(&string)?;
+    //     Ok(dataset)
+    // }
 
     pub fn get_path(&self) -> String {
         match &self.backend {

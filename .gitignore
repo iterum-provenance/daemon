@@ -6,3 +6,4 @@
 /datasets
 .vscode
 .database.sqlite
+.cache

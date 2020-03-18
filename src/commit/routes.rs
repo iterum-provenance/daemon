@@ -15,9 +15,15 @@ async fn get_commit(
     _config: web::Data<config::Config>,
     path: web::Path<(String, String)>,
 ) -> impl Responder {
-    info!("Getting commit from dataset with path {:?}", path.0);
-    match Dataset::get_by_path(&path.0) {
-        Ok(dataset) => match dataset.get_commit(&path.1) {
+    let (dataset_path, commit_hash) = path.into_inner();
+
+    info!(
+        "Getting commit with hash \"{}\" from dataset with path {}",
+        commit_hash, dataset_path
+    );
+
+    match Dataset::get_by_path(&dataset_path) {
+        Ok(dataset) => match dataset.get_commit(&commit_hash) {
             Ok(commit) => HttpResponse::Ok().json(commit),
             Err(_e) => HttpResponse::NotFound().finish(),
         },
@@ -87,21 +93,22 @@ async fn create_commit_with_data(
     debug!("Time to upload file \t{}ms", now.elapsed().as_millis());
 
     // Parse the files stored in the temporary folder. Return the commit data structure.
-    let commit = dataset
-        .backend
-        .get_commit_from_file("./tmp/".to_string())
-        .unwrap();
+    // let commit = dataset
+    //     .backend
+    //     .get_commit_from_file("./tmp/".to_string())
+    //     .unwrap();
 
-    dataset
-        .backend
-        .store_committed_files(&dataset, "./tmp/".to_string())
-        .unwrap();
+    // dataset
+    //     .backend
+    //     .store_committed_files(&dataset, "./tmp/".to_string())
+    //     .unwrap();
     // Now add the commit to the dataset.
 
-    match dataset.add_commit(&commit) {
-        Ok(()) => Ok(HttpResponse::Ok().json(&commit)),
-        Err(e) => Ok(HttpResponse::Conflict().json(e)),
-    }
+    // match dataset.add_commit(&commit) {
+    //     Ok(()) => Ok(HttpResponse::Ok().json(&commit)),
+    //     Err(e) => Ok(HttpResponse::Conflict().json(e)),
+    // }
+    Ok(HttpResponse::Ok().finish())
 }
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {

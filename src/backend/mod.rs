@@ -1,9 +1,11 @@
 use crate::commit::Commit;
 use crate::dataset::Dataset;
+
 use local::Local;
 use serde::{Deserialize, Serialize};
 use storable::Storable;
 
+pub mod error;
 pub mod local;
 pub mod storable;
 
@@ -14,7 +16,7 @@ pub enum Backend {
     GoogleCloud,
 }
 
-impl Storable for Backend {
+impl Backend {
     fn store_committed_files(&self, dataset: &Dataset, path: String) -> Result<(), std::io::Error> {
         match self {
             Backend::Local(backend) => backend.store_committed_files(dataset, path),

@@ -4,6 +4,7 @@ use actix_web::{error, web, HttpResponse};
 use actix_web::{get, App, HttpServer};
 use dotenv::dotenv;
 use listenfd::ListenFd;
+use sled;
 use std::env;
 
 mod backend;
@@ -27,6 +28,18 @@ pub fn index() -> HttpResponse {
     HttpResponse::Ok().body(html)
 }
 
+impl From<&dataset::Dataset> for sled::IVec {
+    fn from(dataset: &dataset::Dataset) -> sled::IVec {
+        bincode::serialize(dataset).unwrap().into()
+    }
+}
+
+impl From<sled::IVec> for dataset::Dataset {
+    fn from(ivec: sled::IVec) -> dataset::Dataset {
+        bincode::deserialize(&ivec).unwrap()
+    }
+}
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
@@ -34,10 +47,30 @@ async fn main() -> std::io::Result<()> {
 
     let mut listenfd = ListenFd::from_env();
 
+    let cache_path = env::var("CACHE_PATH").expect("Cache path not set");
+    let t = sled::open(cache_path).unwrap();
+    let dataset1 = dataset::Dataset {
+        name: String::from("Dog photos"),
+        path: String::from("test_dataset"),
+        backend: backend::Backend::Local(backend::local::Local {
+            path: String::from("./storage/"),
+        }),
+        description: String::from("Very important dog photos."),
+    };
+    // t.insert(
+    //     "test_dataset".as_bytes(),
+    //     bincode::serialize(&dataset1).unwrap(),
+    // )
+    // .unwrap();
+    t.insert("test_dataset", &dataset1).unwrap();
+    let result: dataset::Dataset = t.get("test_dataset").unwrap().unwrap().into();
+    debug!("result: {:?}", result);
+
     let config = config::Config {
         app_name: String::from("Actix-web"),
         storage_path: String::from("./storage/"),
         dataset_path: String::from("./datasets/"),
+        cache: t,
     };
     std::fs::create_dir_all(&config.storage_path).unwrap();
 

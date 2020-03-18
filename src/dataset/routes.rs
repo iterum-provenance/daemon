@@ -60,28 +60,29 @@ async fn delete_dataset(
 }
 
 #[get("/{dataset}")]
-async fn get_dataset(
-    _config: web::Data<config::Config>,
-    path: web::Path<String>,
-) -> impl Responder {
+async fn get_dataset(config: web::Data<config::Config>, path: web::Path<String>) -> impl Responder {
     info!("Getting dataset with path {:?}", path);
-
-    let dataset_path = format!("./storage/{}/dataset.json", path);
-    if Path::new(&dataset_path).exists() {
-        let string = fs::read_to_string(&dataset_path).unwrap();
-        let object: Dataset = serde_json::from_str(&string).unwrap();
-        HttpResponse::Ok().json(object)
-    } else {
-        HttpResponse::NotFound().finish()
+    let dataset_path = path.to_string();
+    match config.cache.get(dataset_path).unwrap() {
+        Some(dataset_binary) => {
+            let dataset: Dataset = dataset_binary.into();
+            HttpResponse::Ok().json(dataset)
+        }
+        None => HttpResponse::NotFound().finish(),
     }
 }
 
 #[get("/{dataset}/vtree")]
-async fn get_vtree(_config: web::Data<config::Config>, path: web::Path<String>) -> impl Responder {
+async fn get_vtree(config: web::Data<config::Config>, path: web::Path<String>) -> impl Responder {
     info!("Getting vtree from dataset with path {:?}", path);
-    match Dataset::get_by_path(&path) {
-        Ok(dataset) => HttpResponse::Ok().json(dataset.get_vtree().unwrap()),
-        _ => HttpResponse::NotFound().finish(),
+    let dataset_path = path.to_string();
+    match config.cache.get(dataset_path).unwrap() {
+        Some(dataset_binary) => {
+            let dataset: Dataset = dataset_binary.into();
+            let vtree = dataset.backend.get_vtree(dataset.path);
+            HttpResponse::Ok().json(vtree)
+        }
+        None => HttpResponse::NotFound().finish(),
     }
 }
 
