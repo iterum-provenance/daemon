@@ -1,15 +1,13 @@
 use crate::backend::Backend;
 use crate::commit;
-use crate::commit::{ChangeType, Commit};
+use crate::commit::Commit;
 use crate::dataset::error::DatasetError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use std::io;
-use std::io::{Read, Write};
-use std::path::Path;
+use std::io::Write;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Branch {
@@ -41,7 +39,7 @@ pub struct Dataset {
 }
 
 impl Dataset {
-    pub fn read_from_path(path: &String) -> Result<Dataset, Box<Error>> {
+    pub fn read_from_path(path: &String) -> Result<Dataset, Box<dyn Error>> {
         let dataset_path = format!("{}/dataset.json", &path);
         let string: String = fs::read_to_string(&dataset_path)?;
         let item: Dataset = serde_json::from_str(&string)?;
@@ -104,7 +102,7 @@ impl Dataset {
         }
     }
 
-    pub fn get_vtree(&self) -> Result<VersionTree, Box<Error>> {
+    pub fn get_vtree(&self) -> Result<VersionTree, Box<dyn Error>> {
         let vtree_path = match &self.backend {
             Backend::Local(backend) => format!("{}{}/vtree.json", backend.path, self.path),
             _ => panic!("Backend not implemented"),
@@ -114,7 +112,7 @@ impl Dataset {
         Ok(vtree)
     }
 
-    pub fn get_branch(&self, branch_hash: &String) -> Result<Branch, Box<Error>> {
+    pub fn get_branch(&self, branch_hash: &String) -> Result<Branch, Box<dyn Error>> {
         let branch_path = match &self.backend {
             Backend::Local(backend) => format!(
                 "{}{}/branches/{}.json",
@@ -127,7 +125,7 @@ impl Dataset {
         Ok(branch)
     }
 
-    pub fn get_commit(&self, commit_hash: &String) -> Result<Commit, Box<Error>> {
+    pub fn get_commit(&self, commit_hash: &String) -> Result<Commit, Box<dyn Error>> {
         let commit_path = match &self.backend {
             Backend::Local(backend) => format!(
                 "{}{}/versions/{}.json",
@@ -140,7 +138,7 @@ impl Dataset {
         Ok(commit)
     }
 
-    pub fn get_by_path(path: &String) -> Result<Dataset, Box<Error>> {
+    pub fn get_by_path(path: &String) -> Result<Dataset, Box<dyn Error>> {
         debug!("Getting dataset by path: {}", path);
         let config_path = format!("./storage/{}/dataset.json", path);
         let string = fs::read_to_string(&config_path)?;

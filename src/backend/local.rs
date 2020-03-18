@@ -10,11 +10,11 @@ pub struct Local {
 }
 
 impl Local {
-    pub fn new(path: &String) -> Local {
-        Local {
-            path: path.to_string(),
-        }
-    }
+    // pub fn new(path: &String) -> Local {
+    //     Local {
+    //         path: path.to_string(),
+    //     }
+    // }
 }
 
 impl Storable for Local {

@@ -1,13 +1,10 @@
 #[macro_use]
 extern crate log;
-use actix_web::{error, web, FromRequest, HttpResponse, Responder};
+use actix_web::{error, web, HttpResponse};
 use actix_web::{get, App, HttpServer};
 use dotenv::dotenv;
 use listenfd::ListenFd;
-use std::collections::HashMap;
 use std::env;
-use std::fs::File;
-use std::io::{Read, Write};
 
 mod backend;
 mod commit;

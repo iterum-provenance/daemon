@@ -1,5 +1,4 @@
 use crate::backend::storable::Storable;
-use crate::commit::ChangeType;
 use crate::commit::Commit;
 use crate::config;
 use crate::dataset::Dataset;
@@ -7,7 +6,6 @@ use actix_multipart::Multipart;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use actix_web::{Error, Result};
 use async_std::prelude::*;
-use bytes::Bytes;
 use futures::StreamExt;
 use std::fs;
 use std::time::Instant;
@@ -21,7 +19,7 @@ async fn get_commit(
     match Dataset::get_by_path(&path.0) {
         Ok(dataset) => match dataset.get_commit(&path.1) {
             Ok(commit) => HttpResponse::Ok().json(commit),
-            Err(e) => HttpResponse::NotFound().finish(),
+            Err(_e) => HttpResponse::NotFound().finish(),
         },
         _ => HttpResponse::NotFound().finish(),
     }

@@ -1,20 +1,8 @@
-use crate::backend::storable::Storable;
-use crate::backend::Backend;
-use crate::commit::ChangeType;
-use crate::commit::Commit;
 use crate::config;
 use crate::dataset::Dataset;
-use actix_multipart::Multipart;
-use actix_web::{delete, error, get, post, web, HttpResponse, Responder};
-use actix_web::{Error, Result};
-use async_std::prelude::*;
-use bytes::Bytes;
-use futures::StreamExt;
+use actix_web::{delete, get, post, web, HttpResponse, Responder};
+
 use std::fs;
-use std::fs::File;
-use std::io;
-use std::io::{Read, Write};
-use std::time::Instant;
 
 use std::path::Path;
 
@@ -106,7 +94,7 @@ async fn get_branch(
     match Dataset::get_by_path(&path.0) {
         Ok(dataset) => match dataset.get_branch(&path.1) {
             Ok(commit) => HttpResponse::Ok().json(commit),
-            Err(e) => HttpResponse::NotFound().finish(),
+            Err(_e) => HttpResponse::NotFound().finish(),
         },
         _ => HttpResponse::NotFound().finish(),
     }
