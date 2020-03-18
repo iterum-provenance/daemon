@@ -18,8 +18,6 @@ use std::time::Instant;
 
 use std::path::Path;
 
-// use async_std::prelude::*;
-
 #[get("/{dataset}/file/{commit}/{file}")]
 async fn get_file(
     _config: web::Data<config::Config>,
@@ -35,7 +33,7 @@ async fn get_file(
             let response = HttpResponse::Ok().content_type("image/jpeg").body(contents);
             response
         }
-        Err(error) => HttpResponse::NotFound().body("Could not find the file"),
+        Err(error) => HttpResponse::NotFound().body(format!("{}", error)),
     }
 }
 
