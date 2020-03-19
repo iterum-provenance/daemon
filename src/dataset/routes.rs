@@ -46,12 +46,14 @@ async fn get_file(
 
 #[post("/")]
 async fn create_dataset(
-    _config: web::Data<config::Config>,
+    config: web::Data<config::Config>,
     dataset: web::Json<Dataset>,
 ) -> Result<HttpResponse, DaemonError> {
     info!("Creating new dataset with name {:?}", dataset.name);
     let dataset = dataset.into_inner();
     dataset.backend.create_dataset(&dataset)?;
+    config.cache.insert(&dataset.path, &dataset)?;
+
     Ok(HttpResponse::Ok().json(&dataset))
 }
 
@@ -68,6 +70,7 @@ async fn delete_dataset(
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
     dataset.backend.remove_dataset(&path)?;
+    config.cache.remove(&dataset_path)?;
     Ok(HttpResponse::Ok().finish())
 }
 

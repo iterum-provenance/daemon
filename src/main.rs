@@ -48,23 +48,24 @@ async fn main() -> std::io::Result<()> {
     let mut listenfd = ListenFd::from_env();
 
     let cache_path = env::var("CACHE_PATH").expect("Cache path not set");
-    let t = sled::open(cache_path).unwrap();
-    let dataset1 = dataset::Dataset {
-        name: String::from("Dog photos"),
-        path: String::from("test_dataset"),
-        backend: backend::Backend::Local(backend::local::Local {
-            path: String::from("./storage/"),
-        }),
-        description: String::from("Very important dog photos."),
-    };
-    // t.insert(
-    //     "test_dataset".as_bytes(),
-    //     bincode::serialize(&dataset1).unwrap(),
-    // )
-    // .unwrap();
-    t.insert("test_dataset", &dataset1).unwrap();
-    let result: dataset::Dataset = t.get("test_dataset").unwrap().unwrap().into();
-    debug!("result: {:?}", result);
+    std::fs::remove_dir_all(&cache_path).unwrap();
+    let t = sled::open(&cache_path).unwrap();
+    // let dataset1 = dataset::Dataset {
+    //     name: String::from("Dog photos"),
+    //     path: String::from("test_dataset"),
+    //     backend: backend::Backend::Local(backend::local::Local {
+    //         path: String::from("./storage/"),
+    //     }),
+    //     description: String::from("Very important dog photos."),
+    // };
+    // // t.insert(
+    // //     "test_dataset".as_bytes(),
+    // //     bincode::serialize(&dataset1).unwrap(),
+    // // )
+    // // .unwrap();
+    // t.insert("test_dataset", &dataset1).unwrap();
+    // let result: dataset::Dataset = t.get("test_dataset").unwrap().unwrap().into();
+    // debug!("result: {:?}", result);
 
     let config = config::Config {
         app_name: String::from("Actix-web"),

@@ -35,7 +35,10 @@ impl fmt::Display for DaemonError {
 
 impl From<std::io::Error> for DaemonError {
     fn from(error: std::io::Error) -> DaemonError {
-        DaemonError::Io(error)
+        match error.kind() {
+            std::io::ErrorKind::NotFound => DaemonError::NotFound,
+            _ => DaemonError::Io(error),
+        }
     }
 }
 

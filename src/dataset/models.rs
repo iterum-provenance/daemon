@@ -1,4 +1,6 @@
+use crate::backend::storable::Storable;
 use crate::backend::Backend;
+use crate::error::DaemonError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -53,6 +55,13 @@ pub struct Dataset {
     pub path: String,
     pub backend: Backend,
     pub description: String,
+}
+
+impl Dataset {
+    pub fn add_commit(&self, commit: &Commit) -> Result<bool, DaemonError> {
+        let mut vtree = self.backend.get_vtree(&self.path)?;
+        Ok(true)
+    }
 }
 
 // impl Dataset {

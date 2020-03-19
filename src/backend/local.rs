@@ -2,6 +2,7 @@ use super::storable::Storable;
 use crate::dataset::{Branch, ChangeType, Commit, Dataset, VersionTree};
 use crate::error::DaemonError;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -73,7 +74,8 @@ impl Storable for Local {
         vtree: &VersionTree,
     ) -> std::result::Result<(), DaemonError> {
         let vtree_string = serde_json::to_string_pretty(vtree)?;
-        let mut vtree_file = File::create(format!("{}/vtree.json", dataset_path))?;
+        let path = format!("{}{}/vtree.json", self.path, dataset_path);
+        let mut vtree_file = File::create(path)?;
         vtree_file.write_all(&vtree_string.as_bytes())?;
         Ok(())
     }
@@ -97,6 +99,13 @@ impl Storable for Local {
         let mut dataset_file = File::create(format!("{}/dataset.json", path))?;
         dataset_file.write_all(&string.as_bytes())?;
 
+        let tree = HashMap::new();
+        let branches = HashMap::new();
+        let vtree = VersionTree {
+            tree: tree,
+            branches: branches,
+        };
+        self.set_vtree(&dataset.path, &vtree)?;
         Ok(())
     }
 
