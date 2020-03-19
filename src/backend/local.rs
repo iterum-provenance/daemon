@@ -1,7 +1,6 @@
-use super::error::BackendError;
 use super::storable::Storable;
-use crate::commit::{ChangeType, Commit};
-use crate::dataset::{Branch, Dataset, VersionTree};
+use crate::dataset::{Branch, ChangeType, Commit, Dataset, VersionTree};
+use crate::error::DaemonError;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
@@ -61,7 +60,7 @@ impl Storable for Local {
 
         Ok(commit)
     }
-    fn get_vtree(&self, dataset_path: &String) -> std::result::Result<VersionTree, BackendError> {
+    fn get_vtree(&self, dataset_path: &String) -> std::result::Result<VersionTree, DaemonError> {
         let path = format!("{}{}/vtree.json", self.path, dataset_path);
         let string = fs::read_to_string(path)?;
         let vtree = serde_json::from_str(&string)?;
@@ -72,21 +71,21 @@ impl Storable for Local {
         &self,
         dataset_path: &String,
         vtree: &VersionTree,
-    ) -> std::result::Result<(), BackendError> {
+    ) -> std::result::Result<(), DaemonError> {
         let vtree_string = serde_json::to_string_pretty(vtree)?;
         let mut vtree_file = File::create(format!("{}/vtree.json", dataset_path))?;
         vtree_file.write_all(&vtree_string.as_bytes())?;
         Ok(())
     }
 
-    fn get_dataset(&self, dataset_path: &String) -> std::result::Result<Dataset, BackendError> {
+    fn get_dataset(&self, dataset_path: &String) -> std::result::Result<Dataset, DaemonError> {
         let path = format!("{}{}/dataset.json", self.path, dataset_path);
         let string = fs::read_to_string(&path)?;
         let dataset: Dataset = serde_json::from_str(&string)?;
         Ok(dataset)
     }
 
-    fn create_dataset(&self, dataset: &Dataset) -> std::result::Result<(), BackendError> {
+    fn create_dataset(&self, dataset: &Dataset) -> std::result::Result<(), DaemonError> {
         let path = format!("{}{}", self.path, dataset.path);
         fs::create_dir_all(&path)?;
         fs::create_dir_all(format!("{}/data", &path))?;
@@ -101,7 +100,7 @@ impl Storable for Local {
         Ok(())
     }
 
-    fn remove_dataset(&self, dataset_path: &String) -> std::result::Result<(), BackendError> {
+    fn remove_dataset(&self, dataset_path: &String) -> std::result::Result<(), DaemonError> {
         let path = format!("{}{}", self.path, dataset_path);
         fs::remove_dir_all(path)?;
         Ok(())
@@ -111,7 +110,7 @@ impl Storable for Local {
         &self,
         dataset_path: &String,
         branch_hash: &String,
-    ) -> Result<Branch, BackendError> {
+    ) -> Result<Branch, DaemonError> {
         let path = format!(
             "{}{}/branches/{}.json",
             self.path, dataset_path, branch_hash
@@ -125,7 +124,7 @@ impl Storable for Local {
         &self,
         dataset_path: &std::string::String,
         branch: &Branch,
-    ) -> Result<(), BackendError> {
+    ) -> Result<(), DaemonError> {
         let path = format!(
             "{}{}/branches/{}.json",
             self.path, dataset_path, branch.hash
@@ -140,16 +139,17 @@ impl Storable for Local {
         &self,
         dataset_path: &String,
         commit_hash: &String,
-    ) -> Result<Commit, BackendError> {
+    ) -> Result<Commit, DaemonError> {
         let path = format!(
             "{}{}/versions/{}.json",
             self.path, dataset_path, commit_hash
         );
-        let string = fs::read_to_string(commit_hash)?;
+        let string = fs::read_to_string(path)?;
         let commit = serde_json::from_str(&string)?;
         Ok(commit)
     }
-    fn create_commit(&self, dataset_path: &String, commit: &Commit) -> Result<(), BackendError> {
+
+    fn create_commit(&self, dataset_path: &String, commit: &Commit) -> Result<(), DaemonError> {
         let path = format!(
             "{}{}/versions/{}.json",
             self.path, dataset_path, commit.hash
@@ -158,5 +158,24 @@ impl Storable for Local {
         let mut commit_file = File::create(path)?;
         commit_file.write_all(&string.as_bytes())?;
         Ok(())
+    }
+
+    fn get_file(
+        &self,
+        dataset_path: &String,
+        commit_hash: &String,
+        filename: &String,
+    ) -> Result<Vec<u8>, DaemonError> {
+        let file_path = format!(
+            "{}{}/data/{}/{}",
+            self.path, dataset_path, filename, commit_hash
+        );
+        match fs::read(&file_path) {
+            Ok(contents) => Ok(contents),
+            Err(error) => match error.kind() {
+                std::io::ErrorKind::NotFound => Err(DaemonError::NotFound),
+                _ => Err(DaemonError::Io(error)),
+            },
+        }
     }
 }

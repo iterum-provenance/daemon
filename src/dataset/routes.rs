@@ -1,104 +1,187 @@
 use crate::config;
-use crate::dataset::Dataset;
-use actix_web::{delete, get, post, web, HttpResponse, Responder};
+use crate::dataset::{Branch, Dataset, VersionTree};
+use actix_multipart::Multipart;
+use actix_web::{delete, get, post, web, HttpResponse};
 
+use crate::backend::storable::Storable;
+use crate::error::DaemonError;
+use async_std::prelude::*;
+use futures::StreamExt;
+use std::ffi::OsStr;
 use std::fs;
-
 use std::path::Path;
+use std::time::Instant;
 
 #[get("/{dataset}/file/{commit}/{file}")]
 async fn get_file(
-    _config: web::Data<config::Config>,
-    info: web::Path<(String, String, String)>,
-) -> impl Responder {
-    info!("Retrieving file {} from {}:{}", info.2, info.0, info.1);
-
-    let dataset = Dataset::get_by_path(&info.0).unwrap();
-    let file_path = format!("{}/data/{}/{}", dataset.get_path(), &info.2, &info.1);
-    debug!("Reading path {}", file_path);
-    match fs::read(&file_path) {
-        Ok(contents) => {
-            let response = HttpResponse::Ok().content_type("image/jpeg").body(contents);
-            response
-        }
-        Err(error) => HttpResponse::NotFound().body(format!("{}", error)),
-    }
+    config: web::Data<config::Config>,
+    path: web::Path<(String, String, String)>,
+) -> Result<HttpResponse, DaemonError> {
+    let (dataset_path, commit_hash, filename) = path.into_inner();
+    info!(
+        "Getting file {} from commit {} from dataset {}",
+        filename, commit_hash, dataset_path
+    );
+    let dataset: Dataset = config
+        .cache
+        .get(&dataset_path)?
+        .ok_or_else(|| DaemonError::NotFound)?
+        .into();
+    let file_data: Vec<u8> = dataset
+        .backend
+        .get_file(&dataset_path, &commit_hash, &filename)?;
+    let file_path = Path::new(&filename);
+    let response = match file_path
+        .extension()
+        .and_then(OsStr::to_str)
+        .expect("Something wrong with the file")
+    {
+        "jpg" => HttpResponse::Ok()
+            .content_type("image/jpeg")
+            .body(file_data),
+        _ => unimplemented!(),
+    };
+    Ok(response)
 }
 
 #[post("/")]
 async fn create_dataset(
     _config: web::Data<config::Config>,
     dataset: web::Json<Dataset>,
-) -> impl Responder {
+) -> Result<HttpResponse, DaemonError> {
     info!("Creating new dataset with name {:?}", dataset.name);
     let dataset = dataset.into_inner();
-
-    let constructed_dataset = Dataset::new(
-        &dataset.name,
-        &dataset.path,
-        dataset.backend,
-        &dataset.description,
-    );
-
-    HttpResponse::Ok().json(constructed_dataset)
+    dataset.backend.create_dataset(&dataset)?;
+    Ok(HttpResponse::Ok().json(&dataset))
 }
 
 #[delete("/{dataset}")]
 async fn delete_dataset(
-    _config: web::Data<config::Config>,
+    config: web::Data<config::Config>,
     path: web::Path<String>,
-) -> impl Responder {
+) -> Result<HttpResponse, DaemonError> {
     info!("Deleting dataset with path {:?}", path);
-
-    let dataset_path = format!("./storage/{}", path);
-    if Path::new(&dataset_path).exists() {
-        fs::remove_dir_all(&dataset_path).unwrap();
-        HttpResponse::Ok().finish()
-    } else {
-        HttpResponse::NotFound().finish()
-    }
+    let dataset_path = path.to_string();
+    let dataset: Dataset = config
+        .cache
+        .get(&dataset_path)?
+        .ok_or_else(|| DaemonError::NotFound)?
+        .into();
+    dataset.backend.remove_dataset(&path)?;
+    Ok(HttpResponse::Ok().finish())
 }
 
 #[get("/{dataset}")]
-async fn get_dataset(config: web::Data<config::Config>, path: web::Path<String>) -> impl Responder {
+async fn get_dataset(
+    config: web::Data<config::Config>,
+    path: web::Path<String>,
+) -> Result<HttpResponse, DaemonError> {
     info!("Getting dataset with path {:?}", path);
     let dataset_path = path.to_string();
-    match config.cache.get(dataset_path).unwrap() {
-        Some(dataset_binary) => {
-            let dataset: Dataset = dataset_binary.into();
-            HttpResponse::Ok().json(dataset)
-        }
-        None => HttpResponse::NotFound().finish(),
-    }
+    let dataset: Dataset = config
+        .cache
+        .get(&dataset_path)?
+        .ok_or_else(|| DaemonError::NotFound)?
+        .into();
+    Ok(HttpResponse::Ok().json(dataset))
 }
 
 #[get("/{dataset}/vtree")]
-async fn get_vtree(config: web::Data<config::Config>, path: web::Path<String>) -> impl Responder {
+async fn get_vtree(
+    config: web::Data<config::Config>,
+    path: web::Path<String>,
+) -> Result<HttpResponse, DaemonError> {
     info!("Getting vtree from dataset with path {:?}", path);
     let dataset_path = path.to_string();
-    match config.cache.get(dataset_path).unwrap() {
-        Some(dataset_binary) => {
-            let dataset: Dataset = dataset_binary.into();
-            let vtree = dataset.backend.get_vtree(dataset.path);
-            HttpResponse::Ok().json(vtree)
-        }
-        None => HttpResponse::NotFound().finish(),
-    }
+    let dataset: Dataset = config
+        .cache
+        .get(dataset_path)?
+        .ok_or_else(|| DaemonError::NotFound)?
+        .into();
+    let vtree: VersionTree = dataset.backend.get_vtree(&dataset.path)?;
+    Ok(HttpResponse::Ok().json(vtree))
 }
 
 #[get("/{dataset}/branch/{branch_hash}")]
 async fn get_branch(
-    _config: web::Data<config::Config>,
+    config: web::Data<config::Config>,
     path: web::Path<(String, String)>,
-) -> impl Responder {
-    info!("Getting branch from dataset with path {:?}", path.0);
-    match Dataset::get_by_path(&path.0) {
-        Ok(dataset) => match dataset.get_branch(&path.1) {
-            Ok(commit) => HttpResponse::Ok().json(commit),
-            Err(_e) => HttpResponse::NotFound().finish(),
-        },
-        _ => HttpResponse::NotFound().finish(),
+) -> Result<HttpResponse, DaemonError> {
+    let (dataset_path, branch_hash) = path.into_inner();
+    info!(
+        "Getting branch {} from dataset {}",
+        branch_hash, dataset_path
+    );
+    let dataset: Dataset = config
+        .cache
+        .get(&dataset_path)?
+        .ok_or_else(|| DaemonError::NotFound)?
+        .into();
+    let branch: Branch = dataset.backend.get_branch(&dataset_path, &branch_hash)?;
+    Ok(HttpResponse::Ok().json(branch))
+}
+
+#[get("/{dataset}/commit/{commit}")]
+async fn get_commit(
+    config: web::Data<config::Config>,
+    path: web::Path<(String, String)>,
+) -> Result<HttpResponse, DaemonError> {
+    let (dataset_path, commit_hash) = path.into_inner();
+
+    info!(
+        "Getting commit with hash \"{}\" from dataset with path {}",
+        commit_hash, dataset_path
+    );
+    let dataset: Dataset = config
+        .cache
+        .get(&dataset_path)?
+        .ok_or_else(|| DaemonError::NotFound)?
+        .into();
+
+    let commit = dataset.backend.get_commit(&dataset_path, &commit_hash)?;
+    Ok(HttpResponse::Ok().json(commit))
+}
+
+#[post("/{dataset}/commit")]
+async fn create_commit_with_data(
+    config: web::Data<config::Config>,
+    path: web::Path<String>,
+    mut payload: Multipart,
+) -> Result<HttpResponse, DaemonError> {
+    let dataset_path = path.to_string();
+    info!("Posting commit with data to dataset {}", &dataset_path);
+    let _dataset: Dataset = config
+        .cache
+        .get(&dataset_path)?
+        .ok_or_else(|| DaemonError::NotFound)?
+        .into();
+
+    // iterate over multipart stream
+    let now = Instant::now();
+    let temp_path = format!("./.tmp/");
+    fs::create_dir_all(&temp_path).expect("Could not create temporary file directory.");
+
+    while let Some(item) = payload.next().await {
+        let mut field = item?;
+        let content_disp = field
+            .content_disposition()
+            .ok_or_else(|| actix_web::error::ParseError::Incomplete)?;
+        let filename = content_disp
+            .get_filename()
+            .ok_or_else(|| actix_web::error::ParseError::Incomplete)?;
+
+        let filepath = format!("{}{}", &temp_path, &filename);
+        debug!("Saving file to {}", filepath);
+        let mut f = async_std::fs::File::create(filepath).await?;
+        // Field in turn is stream of *Bytes* object
+        while let Some(chunk) = field.next().await {
+            let data = chunk.unwrap();
+            f.write_all(&data).await?;
+        }
     }
+    debug!("Time to upload file \t{}ms", now.elapsed().as_millis());
+
+    Ok(HttpResponse::Ok().finish())
 }
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
@@ -108,4 +191,6 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(get_vtree);
     cfg.service(get_branch);
     cfg.service(get_file);
+    cfg.service(get_commit);
+    cfg.service(create_commit_with_data);
 }

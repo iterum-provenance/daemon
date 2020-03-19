@@ -1,16 +1,16 @@
 #[macro_use]
 extern crate log;
-use actix_web::{error, web, HttpResponse};
 use actix_web::{get, App, HttpServer};
+use actix_web::{web, HttpResponse};
 use dotenv::dotenv;
 use listenfd::ListenFd;
 use sled;
 use std::env;
 
 mod backend;
-mod commit;
 pub mod config;
 mod dataset;
+mod error;
 mod utils;
 
 #[get("/")]
@@ -81,11 +81,13 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {
                 let message = format!("Error when handling JSON: {:?}", err);
                 error!("{}", message);
-                error::InternalError::from_response(err, HttpResponse::Conflict().body(message))
-                    .into()
+                actix_web::error::InternalError::from_response(
+                    err,
+                    HttpResponse::Conflict().body(message),
+                )
+                .into()
             }))
             .service(index)
-            .configure(commit::init_routes)
             .configure(dataset::init_routes)
     });
 
