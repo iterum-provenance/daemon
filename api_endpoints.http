@@ -1,4 +1,4 @@
-@address = http://localhost:5000
+@address = http://localhost:3000
 @dataset_path = test_dataset
 @initial_commit_hash = initial_commit
 @commit_hash = 4
@@ -16,12 +16,10 @@ POST {{address}}/ HTTP/1.1
 content-type: application/json
 
 {
-  "name": "Test dataset",
-  "path": "{{dataset_path}}",
-  "backend": {
-    "Local": {
+  "name": "{{dataset_path}}",
+  "backend": "Local",
+  "credentials": {
       "path": "./storage/"
-    }
   },
   "description": "This dataset contains test images!"
 }

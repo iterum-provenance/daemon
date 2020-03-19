@@ -26,7 +26,7 @@ impl fmt::Display for DaemonError {
             DaemonError::Io(err) => write!(f, "DaemonError IO: {}", err),
             DaemonError::Serialization(err) => write!(f, "DaemonError Serialization: {}", err),
             DaemonError::Cache(err) => write!(f, "DaemonError Cache: {}", err),
-            DaemonError::NotFound => write!(f, "DaemonError Resource could not be found."),
+            DaemonError::NotFound => write!(f, "DaemonError resource could not be found."),
             DaemonError::MultipartError(err) => write!(f, "DaemonError Multipart error: {}", err),
             DaemonError::ParseError(err) => write!(f, "DaemonError ParseError: {}", err),
         }

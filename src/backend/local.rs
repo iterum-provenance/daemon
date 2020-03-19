@@ -37,7 +37,7 @@ impl Storable for Local {
                         let tmp_file_path = format!("{}{}", &path, file);
                         debug!("Pulling file from: {}", tmp_file_path);
 
-                        let file_dir = format!("{}{}/data/{}", self.path, dataset.path, file);
+                        let file_dir = format!("{}{}/data/{}", self.path, dataset.name, file);
                         fs::create_dir_all(&file_dir)
                             .expect("Could not create data file directory.");
 
@@ -88,7 +88,7 @@ impl Storable for Local {
     }
 
     fn create_dataset(&self, dataset: &Dataset) -> std::result::Result<(), DaemonError> {
-        let path = format!("{}{}", self.path, dataset.path);
+        let path = format!("{}{}", self.path, dataset.name);
         fs::create_dir_all(&path)?;
         fs::create_dir_all(format!("{}/data", &path))?;
         fs::create_dir_all(format!("{}/versions", &path))?;
@@ -105,7 +105,7 @@ impl Storable for Local {
             tree: tree,
             branches: branches,
         };
-        self.set_vtree(&dataset.path, &vtree)?;
+        self.set_vtree(&dataset.name, &vtree)?;
         Ok(())
     }
 

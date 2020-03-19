@@ -52,7 +52,7 @@ async fn create_dataset(
     info!("Creating new dataset with name {:?}", dataset.name);
     let dataset = dataset.into_inner();
     dataset.backend.create_dataset(&dataset)?;
-    config.cache.insert(&dataset.path, &dataset)?;
+    config.cache.insert(&dataset.name, &dataset)?;
 
     Ok(HttpResponse::Ok().json(&dataset))
 }
@@ -101,7 +101,7 @@ async fn get_vtree(
         .get(dataset_path)?
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
-    let vtree: VersionTree = dataset.backend.get_vtree(&dataset.path)?;
+    let vtree: VersionTree = dataset.backend.get_vtree(&dataset.name)?;
     Ok(HttpResponse::Ok().json(vtree))
 }
 
