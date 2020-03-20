@@ -89,24 +89,27 @@ impl Storable for Local {
 
     fn create_dataset(&self, dataset: &Dataset) -> std::result::Result<(), DaemonError> {
         let path = format!("{}{}", self.path, dataset.name);
-        fs::create_dir_all(&path)?;
-        fs::create_dir_all(format!("{}/data", &path))?;
-        fs::create_dir_all(format!("{}/versions", &path))?;
-        fs::create_dir_all(format!("{}/branches", &path))?;
-        fs::create_dir_all(format!("{}/runs", &path))?;
-
-        let string = serde_json::to_string_pretty(dataset)?;
-        let mut dataset_file = File::create(format!("{}/dataset.json", path))?;
-        dataset_file.write_all(&string.as_bytes())?;
-
-        let tree = HashMap::new();
-        let branches = HashMap::new();
-        let vtree = VersionTree {
-            tree: tree,
-            branches: branches,
-        };
-        self.set_vtree(&dataset.name, &vtree)?;
-        Ok(())
+        debug!("Path for dataset: {}", path);
+        if std::path::Path::new(&path).exists() {
+            Err(DaemonError::AlreadyExists)
+        } else {
+            fs::create_dir_all(&path)?;
+            fs::create_dir_all(format!("{}/data", &path))?;
+            fs::create_dir_all(format!("{}/versions", &path))?;
+            fs::create_dir_all(format!("{}/branches", &path))?;
+            fs::create_dir_all(format!("{}/runs", &path))?;
+            let string = serde_json::to_string_pretty(dataset)?;
+            let mut dataset_file = File::create(format!("{}/dataset.json", path))?;
+            dataset_file.write_all(&string.as_bytes())?;
+            let tree = HashMap::new();
+            let branches = HashMap::new();
+            let vtree = VersionTree {
+                tree: tree,
+                branches: branches,
+            };
+            self.set_vtree(&dataset.name, &vtree)?;
+            Ok(())
+        }
     }
 
     fn remove_dataset(&self, dataset_path: &String) -> std::result::Result<(), DaemonError> {
