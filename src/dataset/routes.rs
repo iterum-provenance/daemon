@@ -6,6 +6,7 @@ use actix_web::{delete, get, post, web, HttpResponse};
 
 use crate::backend::storable::Storable;
 use crate::error::DaemonError;
+use crate::utils;
 use async_std::prelude::*;
 use futures::StreamExt;
 use std::ffi::OsStr;
@@ -181,7 +182,7 @@ async fn create_commit_with_data(
     info!("Retrieved dataset");
     // iterate over multipart stream
     let now = Instant::now();
-    let temp_path = format!("./.tmp/");
+    let temp_path = format!("./.tmp/{}/", utils::create_random_hash());
     fs::create_dir_all(&temp_path).expect("Could not create temporary file directory.");
 
     while let Some(item) = payload.next().await {
@@ -195,6 +196,11 @@ async fn create_commit_with_data(
 
         let filepath = format!("{}{}", &temp_path, &filename);
         debug!("Saving file to {}", filepath);
+        let parent_path = std::path::Path::new(&filepath).parent().unwrap();
+        if !parent_path.exists() {
+            fs::create_dir_all(&parent_path).expect("Could not create temporary file directory.");
+        }
+        // fs::create_dir_all(&filepath).expect("Could not create temporary file directory.");
         let mut f = async_std::fs::File::create(filepath).await?;
         // Field in turn is stream of *Bytes* object
         while let Some(chunk) = field.next().await {
@@ -207,6 +213,7 @@ async fn create_commit_with_data(
     // Done uploading. Now parse the commit
 
     version_control::create_commit(&dataset, &temp_path)?;
+    std::fs::remove_dir_all(&temp_path)?;
 
     Ok(HttpResponse::Ok().finish())
 }
