@@ -39,19 +39,14 @@ async fn main() -> std::io::Result<()> {
     let cache_path = env::var("CACHE_PATH").expect("Cache path not set");
 
     // Delete the cache if it exists. (For development purposes.)
-    if std::path::Path::new(&cache_path).exists() {
-        std::fs::remove_dir_all(&cache_path).unwrap();
-        std::fs::remove_dir_all(String::from("./storage/")).unwrap();
-    }
+    // if std::path::Path::new(&cache_path).exists() {
+    //     std::fs::remove_dir_all(&cache_path).unwrap();
+    //     // std::fs::remove_dir_all(String::from("./storage/")).unwrap();
+    // }
     let t = sled::open(&cache_path).expect("Creation of cache db failed..");
 
-    let config = config::Config {
-        app_name: String::from("Actix-web"),
-        storage_path: String::from("./storage/"),
-        dataset_path: String::from("./datasets/"),
-        cache: t,
-    };
-    std::fs::create_dir_all(&config.storage_path).unwrap();
+    let config = config::Config { cache: t };
+    // std::fs::create_dir_all(&config.storage_path).unwrap();
 
     let config_clone = config.clone();
     let mut server = HttpServer::new(move || {
