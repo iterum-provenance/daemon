@@ -31,7 +31,7 @@ impl Storable for Local {
         // // Create the new files wherever necessary
         for item in &commit.diff {
             match item.change_type {
-                ChangeType::Add => {
+                ChangeType::Added => {
                     debug!("Adding files with names:");
                     for file in &item.files {
                         let tmp_file_path = format!("{}/{}", &tmp_files_path, file);
@@ -46,8 +46,8 @@ impl Storable for Local {
                         fs::copy(&tmp_file_path, &file_path)?;
                     }
                 }
-                ChangeType::Remove => {}
-                ChangeType::Update => {}
+                ChangeType::Removed => {}
+                ChangeType::Updated => {}
             }
         }
 

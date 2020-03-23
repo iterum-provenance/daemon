@@ -4,9 +4,9 @@ use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ChangeType {
-    Add,
-    Remove,
-    Update,
+    Added,
+    Removed,
+    Updated,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
