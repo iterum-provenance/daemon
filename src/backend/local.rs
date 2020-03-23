@@ -1,5 +1,5 @@
 use super::storable::Storable;
-use crate::dataset::{Branch, ChangeType, Commit, Dataset, VersionTree};
+use crate::dataset::{Branch, Commit, Dataset, VersionTree};
 use crate::error::DaemonError;
 use serde::{Deserialize, Serialize};
 use std::fs;

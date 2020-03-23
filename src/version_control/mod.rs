@@ -7,10 +7,13 @@ use std::fs;
 
 pub fn create_dataset(dataset: &Dataset) -> Result<(), DaemonError> {
     let mut tree: HashMap<String, VersionTreeNode> = HashMap::new();
+    let root_commit_hash = create_random_hash();
+    let master_branch_hash = create_random_hash();
+
     let root_commit = Commit {
-        hash: create_random_hash(),
+        hash: root_commit_hash.to_string(),
         parent: None,
-        branch: "master".to_owned(),
+        branch: master_branch_hash.to_string(),
         name: Some("root".to_owned()),
         description: "".to_owned(),
         files: vec![],
@@ -26,15 +29,15 @@ pub fn create_dataset(dataset: &Dataset) -> Result<(), DaemonError> {
     };
     let vtree_root_node = VersionTreeNode {
         name: "root".to_owned(),
-        branch: "master".to_owned(),
+        branch: master_branch_hash.to_string(),
         children: vec![],
         parent: None,
     };
-    tree.insert(root_commit.hash.to_string(), vtree_root_node);
+    tree.insert(root_commit_hash.to_string(), vtree_root_node);
     let master_branch = Branch {
-        hash: create_random_hash(),
+        hash: master_branch_hash.to_string(),
         name: "master".to_owned(),
-        head: root_commit.hash.to_string(),
+        head: root_commit_hash.to_string(),
     };
 
     let mut branches = HashMap::new();
