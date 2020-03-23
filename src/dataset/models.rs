@@ -1,6 +1,4 @@
-use crate::backend::storable::Storable;
 use crate::backend::Backend;
-use crate::error::{CommitError, DaemonError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

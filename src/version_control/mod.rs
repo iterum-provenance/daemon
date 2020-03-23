@@ -1,5 +1,5 @@
 use crate::backend::storable::Storable;
-use crate::dataset::{Branch, ChangeType, Commit, Dataset, VersionTree, VersionTreeNode};
+use crate::dataset::{Branch, Commit, Dataset, VersionTree, VersionTreeNode};
 use crate::error::{CommitError, DaemonError};
 use crate::utils::create_random_hash;
 use std::collections::HashMap;

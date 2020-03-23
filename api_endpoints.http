@@ -37,12 +37,12 @@ content-type: application/json
 {
   "hash": "created_branch",
   "name": "CreatedBranch",
-  "head": "fsWnVCljg6D69Eb2bCKXHmVZy2BedWwx"
+  "head": "mkQaqy7kM4ILbBmlSQECAmpK1xMk9fPS"
 }
 
 
 ### Get a branch
-GET {{address}}/{{dataset_path}}/branch/{{branch_hash}} HTTP/1.1
+GET {{address}}/{{dataset_path}}/branch/created_branch HTTP/1.1
 
 ### Add a commit
 POST {{address}}/{{dataset_path}}/commit
@@ -69,6 +69,39 @@ Content-Type: image/jpeg
 < data/train/cats/cat.2.jpg
 
 --MyBoundary--
+
+
+### Add a commit with branch
+POST {{address}}/{{dataset_path}}/commit
+Content-Type: multipart/form-data; boundary=MyBoundary
+Accept: application/json
+
+preamble which should be ignored...
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="branch.json"
+Content-Type: application/json
+
+< data/branch.json
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="commit.json"
+Content-Type: application/json
+
+< data/commit.json
+
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="cat.1.jpg"
+Content-Type: image/jpeg
+
+< data/train/cats/cat.1.jpg
+
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="cat.2.jpg"
+Content-Type: image/jpeg
+
+< data/train/cats/cat.2.jpg
+
+--MyBoundary--
+
 
 ### Get a file
 GET {{address}}/{{dataset_path}}/file/{{commit_hash}}/{{file}} HTTP/1.1

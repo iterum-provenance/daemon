@@ -1,5 +1,5 @@
 use crate::config;
-use crate::dataset::{Branch, Commit, Dataset, VersionTree};
+use crate::dataset::{Branch, Dataset, VersionTree};
 use crate::version_control;
 use actix_multipart::Multipart;
 use actix_web::{delete, get, post, web, HttpResponse};
