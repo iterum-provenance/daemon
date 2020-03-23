@@ -12,6 +12,7 @@ pub mod config;
 mod dataset;
 mod error;
 mod utils;
+mod version_control;
 
 #[get("/")]
 pub fn index() -> HttpResponse {
@@ -40,6 +41,7 @@ async fn main() -> std::io::Result<()> {
     // Delete the cache if it exists. (For development purposes.)
     if std::path::Path::new(&cache_path).exists() {
         std::fs::remove_dir_all(&cache_path).unwrap();
+        std::fs::remove_dir_all(String::from("./storage/")).unwrap();
     }
     let t = sled::open(&cache_path).expect("Creation of cache db failed..");
 

@@ -1,8 +1,7 @@
 use super::storable::Storable;
-use crate::dataset::{Branch, ChangeType, Commit, Dataset, VersionTree};
+use crate::dataset::{Branch, ChangeType, Commit, Dataset, VersionTree, VersionTreeNode};
 use crate::error::DaemonError;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -21,12 +20,13 @@ impl Local {
 }
 
 impl Storable for Local {
-    fn store_committed_files(&self, dataset: &Dataset, path: String) -> Result<(), std::io::Error> {
+    fn store_committed_files(
+        &self,
+        dataset: &Dataset,
+        commit: &Commit,
+        tmp_files_path: String,
+    ) -> Result<(), std::io::Error> {
         debug!("Storing commit in backend.");
-
-        let config_path = format!("{}commit.json", path);
-        let commit_string = fs::read_to_string(config_path)?;
-        let commit: Commit = serde_json::from_str(&commit_string)?;
 
         // // Create the new files wherever necessary
         for item in &commit.diff {
@@ -34,7 +34,7 @@ impl Storable for Local {
                 ChangeType::Add => {
                     debug!("Adding files with names:");
                     for file in &item.files {
-                        let tmp_file_path = format!("{}{}", &path, file);
+                        let tmp_file_path = format!("{}/{}", &tmp_files_path, file);
                         debug!("Pulling file from: {}", tmp_file_path);
 
                         let file_dir = format!("{}{}/data/{}", self.path, dataset.name, file);
@@ -54,13 +54,6 @@ impl Storable for Local {
         Ok(())
     }
 
-    fn get_commit_from_file(&self, path: String) -> Result<Commit, std::io::Error> {
-        let config_path = format!("{}commit.json", path);
-        let commit_string = fs::read_to_string(config_path)?;
-        let commit: Commit = serde_json::from_str(&commit_string)?;
-
-        Ok(commit)
-    }
     fn get_vtree(&self, dataset_path: &String) -> std::result::Result<VersionTree, DaemonError> {
         let path = format!("{}{}/vtree.json", self.path, dataset_path);
         let string = fs::read_to_string(path)?;
@@ -101,13 +94,7 @@ impl Storable for Local {
             let string = serde_json::to_string_pretty(dataset)?;
             let mut dataset_file = File::create(format!("{}/dataset.json", path))?;
             dataset_file.write_all(&string.as_bytes())?;
-            let tree = HashMap::new();
-            let branches = HashMap::new();
-            let vtree = VersionTree {
-                tree: tree,
-                branches: branches,
-            };
-            self.set_vtree(&dataset.name, &vtree)?;
+
             Ok(())
         }
     }

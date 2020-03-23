@@ -1,5 +1,6 @@
 use crate::config;
-use crate::dataset::{Branch, Dataset, VersionTree};
+use crate::dataset::{Branch, Commit, Dataset, VersionTree};
+use crate::version_control;
 use actix_multipart::Multipart;
 use actix_web::{delete, get, post, web, HttpResponse};
 
@@ -51,7 +52,8 @@ async fn create_dataset(
 ) -> Result<HttpResponse, DaemonError> {
     info!("Creating new dataset with name {:?}", dataset.name);
     let dataset = dataset.into_inner();
-    dataset.backend.create_dataset(&dataset)?;
+
+    version_control::create_dataset(&dataset)?;
     config.cache.insert(&dataset.name, &dataset)?;
 
     Ok(HttpResponse::Ok().json(&dataset))
@@ -124,6 +126,24 @@ async fn get_branch(
     Ok(HttpResponse::Ok().json(branch))
 }
 
+#[post("/{dataset}/branch")]
+async fn create_branch(
+    config: web::Data<config::Config>,
+    path: web::Path<String>,
+    branch: web::Json<Branch>,
+) -> Result<HttpResponse, DaemonError> {
+    info!("Creating new branch with name {:?}", branch.name);
+    let dataset_path = path.to_string();
+    let dataset: Dataset = config
+        .cache
+        .get(&dataset_path)?
+        .ok_or_else(|| DaemonError::NotFound)?
+        .into();
+    let branch = branch.into_inner();
+    version_control::create_branch(&dataset, &branch)?;
+    Ok(HttpResponse::Ok().json(&branch))
+}
+
 #[get("/{dataset}/commit/{commit}")]
 async fn get_commit(
     config: web::Data<config::Config>,
@@ -153,12 +173,12 @@ async fn create_commit_with_data(
 ) -> Result<HttpResponse, DaemonError> {
     let dataset_path = path.to_string();
     info!("Posting commit with data to dataset {}", &dataset_path);
-    let _dataset: Dataset = config
+    let dataset: Dataset = config
         .cache
         .get(&dataset_path)?
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
-
+    info!("Retrieved dataset");
     // iterate over multipart stream
     let now = Instant::now();
     let temp_path = format!("./.tmp/");
@@ -184,6 +204,10 @@ async fn create_commit_with_data(
     }
     debug!("Time to upload file \t{}ms", now.elapsed().as_millis());
 
+    // Done uploading. Now parse the commit
+
+    version_control::create_commit(&dataset, &temp_path)?;
+
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -193,6 +217,7 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create_dataset);
     cfg.service(get_vtree);
     cfg.service(get_branch);
+    cfg.service(create_branch);
     cfg.service(get_file);
     cfg.service(get_commit);
     cfg.service(create_commit_with_data);

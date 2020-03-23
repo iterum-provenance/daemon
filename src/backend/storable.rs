@@ -5,10 +5,12 @@ pub trait Storable {
     /// Trait for backends which is used to store the types to the backend.
     /// These functions simply store the structs in the format the backend requires.
     /// It does not perform any integrity checks. This should already have been done at this point.
-    fn store_committed_files(&self, dataset: &Dataset, path: String) -> Result<(), std::io::Error>;
-
-    fn get_commit_from_file(&self, path: String) -> Result<Commit, std::io::Error>;
-
+    fn store_committed_files(
+        &self,
+        dataset: &Dataset,
+        commit: &Commit,
+        tmp_files_path: String,
+    ) -> Result<(), std::io::Error>;
     fn get_vtree(&self, dataset_path: &String) -> Result<VersionTree, DaemonError>;
     fn set_vtree(&self, dataset_path: &String, vtree: &VersionTree) -> Result<(), DaemonError>;
     fn get_dataset(&self, dataset_path: &String) -> Result<Dataset, DaemonError>;

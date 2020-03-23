@@ -1,9 +1,13 @@
-// use serde::{Deserialize, Serialize};
-// use std::error::Error;
-// use std::fs;
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
+use std::iter;
 
-// fn read_file_to_struct<T: Deserialize>(path: String) -> Result<T, Box<Error>> {
-//     let string: String = fs::read_to_string(&path)?;
-//     let item = serde_json::from_str(&string)?;
-//     Ok(item)
-// }
+pub fn create_random_hash() -> String {
+    let mut rng = thread_rng();
+    let hash: String = iter::repeat(())
+        .map(|()| rng.sample(Alphanumeric))
+        .take(32)
+        .collect();
+
+    hash
+}

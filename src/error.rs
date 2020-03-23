@@ -17,6 +17,18 @@ pub enum DaemonError {
     ParseError(ParseError),
     NotFound,
     AlreadyExists,
+    CommitError(CommitError),
+}
+
+#[derive(Debug)]
+pub struct CommitError {
+    message: String,
+}
+
+impl CommitError {
+    pub fn new(message: String) -> CommitError {
+        CommitError { message }
+    }
 }
 
 impl Error for DaemonError {}
@@ -24,13 +36,14 @@ impl Error for DaemonError {}
 impl fmt::Display for DaemonError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            DaemonError::Io(err) => write!(f, "DaemonError IO: {}", err),
-            DaemonError::Serialization(err) => write!(f, "DaemonError Serialization: {}", err),
-            DaemonError::Cache(err) => write!(f, "DaemonError Cache: {}", err),
-            DaemonError::MultipartError(err) => write!(f, "DaemonError Multipart error: {}", err),
-            DaemonError::ParseError(err) => write!(f, "DaemonError ParseError: {}", err),
-            DaemonError::NotFound => write!(f, "DaemonError resource could not be found."),
-            DaemonError::AlreadyExists => write!(f, "DaemonError resource already exists."),
+            DaemonError::Io(err) => write!(f, "IO error: {}", err),
+            DaemonError::Serialization(err) => write!(f, "Serialization error: {}", err),
+            DaemonError::Cache(err) => write!(f, "Cache error: {}", err),
+            DaemonError::MultipartError(err) => write!(f, "Multipart error: {}", err),
+            DaemonError::ParseError(err) => write!(f, "ParseError: {}", err),
+            DaemonError::NotFound => write!(f, "Resource could not be found."),
+            DaemonError::AlreadyExists => write!(f, "Resource already exists."),
+            DaemonError::CommitError(err) => write!(f, "Commit invalid: {}", err.message),
         }
     }
 }
@@ -72,7 +85,7 @@ impl ResponseError for DaemonError {
     fn error_response(&self) -> HttpResponse {
         let status_code = match self {
             DaemonError::NotFound => StatusCode::NOT_FOUND,
-            DaemonError::AlreadyExists => StatusCode::CONFLICT,
+            DaemonError::AlreadyExists | DaemonError::CommitError(_) => StatusCode::CONFLICT,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
 

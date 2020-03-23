@@ -17,17 +17,15 @@ pub enum Backend {
 }
 
 impl Storable for Backend {
-    fn store_committed_files(&self, dataset: &Dataset, path: String) -> Result<(), std::io::Error> {
+    fn store_committed_files(
+        &self,
+        dataset: &Dataset,
+        commit: &Commit,
+        path: String,
+    ) -> Result<(), std::io::Error> {
         match self {
-            Backend::Local(backend) => backend.store_committed_files(dataset, path),
+            Backend::Local(backend) => backend.store_committed_files(dataset, commit, path),
             _ => panic!("Backend not implemented!"),
-        }
-    }
-
-    fn get_commit_from_file(&self, path: String) -> Result<Commit, std::io::Error> {
-        match self {
-            Backend::Local(backend) => backend.get_commit_from_file(path),
-            _ => unimplemented!(),
         }
     }
 

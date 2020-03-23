@@ -1,4 +1,4 @@
-@address = http://localhost:3000
+@address = http://localhost:5000
 @dataset_path = test_dataset
 @initial_commit_hash = initial_commit
 @commit_hash = 4
@@ -30,6 +30,17 @@ GET {{address}}/{{dataset_path}}/vtree HTTP/1.1
 ### Get a commit
 GET {{address}}/{{dataset_path}}/commit/{{commit_hash}} HTTP/1.1
 
+### Create new branch
+POST {{address}}/{{dataset_path}}/branch HTTP/1.1
+content-type: application/json
+
+{
+  "hash": "created_branch",
+  "name": "CreatedBranch",
+  "head": "fsWnVCljg6D69Eb2bCKXHmVZy2BedWwx"
+}
+
+
 ### Get a branch
 GET {{address}}/{{dataset_path}}/branch/{{branch_hash}} HTTP/1.1
 
@@ -40,22 +51,10 @@ Accept: application/json
 
 preamble which should be ignored...
 --MyBoundary
+Content-Disposition: form-data; name="file"; filename="commit.json"
 Content-Type: application/json
 
-{
-    "hash": "{{commit_hash}}",
-    "parent": "{{initial_commit_hash}}",
-    "branch": "{{branch_hash}}",
-    "name": "Update 7-3",
-    "desc": "Added extra cat photos",
-    "diff": [
-        {
-            "change_type": "Add",
-            "files": ["cat.1.jpg", "cat.2.jpg"]
-        }
-    ],
-    "deprecated": false
-}
+< data/commit.json
 
 --MyBoundary
 Content-Disposition: form-data; name="file"; filename="cat.1.jpg"

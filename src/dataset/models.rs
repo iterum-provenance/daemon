@@ -1,4 +1,6 @@
+use crate::backend::storable::Storable;
 use crate::backend::Backend;
+use crate::error::{CommitError, DaemonError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -33,7 +35,7 @@ pub struct Branch {
     pub head: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VersionTreeNode {
     pub name: String,
     pub branch: String,
@@ -41,7 +43,7 @@ pub struct VersionTreeNode {
     pub parent: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VersionTree {
     pub tree: HashMap<String, VersionTreeNode>,
     pub branches: HashMap<String, String>,
@@ -70,15 +72,4 @@ impl From<sled::IVec> for Dataset {
     }
 }
 
-impl Dataset {
-    // pub fn add_commit(&self, commit: &Commit) -> Result<bool, DaemonError> {
-    //     let mut vtree = self.backend.get_vtree(&self.path)?;
-
-    //     if vtree.tree.contains_key(&commit.parent) {
-    //     }
-
-    //     commit.parent
-
-    //     Ok(true)
-    // }
-}
+impl Dataset {}
