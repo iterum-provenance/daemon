@@ -28,7 +28,7 @@ content-type: application/json
 GET {{address}}/{{dataset_path}}/vtree HTTP/1.1
 
 ### Get a commit
-GET {{address}}/{{dataset_path}}/commit/{{commit_hash}} HTTP/1.1
+GET {{address}}/{{dataset_path}}/commit/4 HTTP/1.1
 
 ### Create new branch
 POST {{address}}/{{dataset_path}}/branch HTTP/1.1
@@ -42,7 +42,7 @@ content-type: application/json
 
 
 ### Get a branch
-GET {{address}}/{{dataset_path}}/branch/created_branch HTTP/1.1
+GET {{address}}/{{dataset_path}}/branch/G6a2OFqYamz5XLi52L9FQ5niYtfDMijQ HTTP/1.1
 
 ### Add a commit
 POST {{address}}/{{dataset_path}}/commit

@@ -29,26 +29,26 @@ impl Storable for Local {
         debug!("Storing commit in backend.");
 
         // // Create the new files wherever necessary
-        for item in &commit.diff {
-            match item.change_type {
-                ChangeType::Added => {
-                    debug!("Adding files with names:");
-                    for file in &item.files {
-                        let tmp_file_path = format!("{}/{}", &tmp_files_path, file);
-                        debug!("Pulling file from: {}", tmp_file_path);
+        debug!("Adding files with names:");
+        for file in &commit.diff.added {
+            let tmp_file_path = format!("{}/{}", &tmp_files_path, file);
+            debug!("Pulling file from: {}", tmp_file_path);
 
-                        let file_dir = format!("{}{}/data/{}", self.path, dataset.name, file);
-                        fs::create_dir_all(&file_dir)
-                            .expect("Could not create data file directory.");
+            let file_dir = format!("{}{}/data/{}", self.path, dataset.name, file);
+            fs::create_dir_all(&file_dir).expect("Could not create data file directory.");
 
-                        let file_path = format!("{}/{}", &file_dir, commit.hash);
-                        debug!("Storing file in: {}", file_path);
-                        fs::copy(&tmp_file_path, &file_path)?;
-                    }
-                }
-                ChangeType::Removed => {}
-                ChangeType::Updated => {}
-            }
+            let file_path = format!("{}/{}", &file_dir, commit.hash);
+            debug!("Storing file in: {}", file_path);
+            fs::copy(&tmp_file_path, &file_path)?;
+        }
+        for file in &commit.diff.updated {
+            let tmp_file_path = format!("{}/{}", &tmp_files_path, file);
+            debug!("Pulling file from: {}", tmp_file_path);
+
+            let file_dir = format!("{}{}/data/{}", self.path, dataset.name, file);
+            let file_path = format!("{}/{}", &file_dir, commit.hash);
+            debug!("Storing file in: {}", file_path);
+            fs::copy(&tmp_file_path, &file_path)?;
         }
 
         Ok(())

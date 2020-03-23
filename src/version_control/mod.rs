@@ -1,5 +1,5 @@
 use crate::backend::storable::Storable;
-use crate::dataset::{Branch, Commit, Dataset, VersionTree, VersionTreeNode};
+use crate::dataset::{Branch, Commit, Dataset, Deprecated, Diff, VersionTree, VersionTreeNode};
 use crate::error::{CommitError, DaemonError};
 use crate::utils::create_random_hash;
 use std::collections::HashMap;
@@ -12,9 +12,17 @@ pub fn create_dataset(dataset: &Dataset) -> Result<(), DaemonError> {
         parent: None,
         branch: "master".to_owned(),
         name: Some("root".to_owned()),
-        desc: "".to_owned(),
-        diff: vec![],
-        deprecated: false,
+        description: "".to_owned(),
+        files: vec![],
+        diff: Diff {
+            added: vec![],
+            updated: vec![],
+            removed: vec![],
+        },
+        deprecated: Deprecated {
+            value: false,
+            reason: "".to_owned(),
+        },
     };
     let vtree_root_node = VersionTreeNode {
         name: "root".to_owned(),
