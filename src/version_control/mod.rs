@@ -26,7 +26,7 @@ pub fn create_dataset(dataset: &Dataset) -> Result<(), DaemonError> {
     let master_branch = Branch {
         hash: create_random_hash(),
         name: "master".to_owned(),
-        head: "root".to_owned(),
+        head: root_commit.hash.to_string(),
     };
 
     let mut branches = HashMap::new();
