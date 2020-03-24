@@ -218,6 +218,20 @@ async fn create_commit_with_data(
     Ok(HttpResponse::Ok().finish())
 }
 
+#[post("/reset_state")]
+async fn reset_state(config: web::Data<config::Config>) -> Result<HttpResponse, DaemonError> {
+    debug!("Removing all state from the daemon.");
+    for kv in config.cache.iter() {
+        let (key, value) = kv?;
+        let dataset: Dataset = value.into();
+        debug!("Present in db: {:?}", dataset);
+        dataset.backend.remove_dataset(&dataset.name).unwrap();
+        config.cache.remove(key).unwrap();
+    }
+
+    Ok(HttpResponse::Ok().finish())
+}
+
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(delete_dataset);
     cfg.service(get_dataset);
@@ -228,4 +242,5 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(get_file);
     cfg.service(get_commit);
     cfg.service(create_commit_with_data);
+    cfg.service(reset_state);
 }

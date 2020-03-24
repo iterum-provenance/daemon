@@ -104,6 +104,13 @@ pub fn create_commit(dataset: &Dataset, tmp_path: &String) -> Result<(), DaemonE
     };
 
     // Maybe also add a check that two commits in the same branch cannot have the same parent?
+    // (This is basically the same as checking whether the head of the current branch is the
+    //  same as the parent of the new commit.)
+    if *parent != branch.head {
+        return Err(DaemonError::CommitError(CommitError::new(format!(
+            "The commit is not up to date with the head of the branch."
+        ))));
+    }
 
     branch.head = commit.hash.to_string();
 

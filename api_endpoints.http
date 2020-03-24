@@ -42,7 +42,7 @@ content-type: application/json
 
 
 ### Get a branch
-GET {{address}}/{{dataset_path}}/branch/G6a2OFqYamz5XLi52L9FQ5niYtfDMijQ HTTP/1.1
+GET {{address}}/{{dataset_path}}/branch/gGpK3w1mZyTaTC67v2ucd4MxrhMXg1Et HTTP/1.1
 
 ### Add a commit
 POST {{address}}/{{dataset_path}}/commit
@@ -57,13 +57,13 @@ Content-Type: application/json
 < data/commit.json
 
 --MyBoundary
-Content-Disposition: form-data; name="file"; filename="cat.1.jpg"
+Content-Disposition: form-data; name="file"; filename="data/train/cats/cat.1.jpg/4"
 Content-Type: image/jpeg
 
 < data/train/cats/cat.1.jpg
 
 --MyBoundary
-Content-Disposition: form-data; name="file"; filename="cat.2.jpg"
+Content-Disposition: form-data; name="file"; filename="data/train/cats/cat.2.jpg/4"
 Content-Type: image/jpeg
 
 < data/train/cats/cat.2.jpg
@@ -103,5 +103,36 @@ Content-Type: image/jpeg
 --MyBoundary--
 
 
+### Add a commit octed stream
+POST {{address}}/{{dataset_path}}/commit
+Content-Type: multipart/form-data; boundary=MyBoundary
+Accept: application/json
+
+preamble which should be ignored...
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="commit.json"
+Content-Type: application/octet-stream
+
+< data/commit.json
+
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="cat.1.jpg/4"
+Content-Type: application/octet-stream
+
+< data/train/cats/cat.1.jpg
+
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="cat.2.jpg/4"
+Content-Type: application/octet-stream
+
+< data/train/cats/cat.2.jpg
+
+--MyBoundary--
+
+
 ### Get a file
 GET {{address}}/{{dataset_path}}/file/{{commit_hash}}/{{file}} HTTP/1.1
+
+### Reset state
+POST {{address}}/reset_state HTTP/1.1
+

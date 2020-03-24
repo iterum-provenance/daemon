@@ -35,20 +35,22 @@ impl Storable for Local {
             debug!("Pulling file from: {}", tmp_file_path);
 
             let file_dir = format!("{}{}/data/{}", self.path, dataset.name, file);
-            fs::create_dir_all(&file_dir).expect("Could not create data file directory.");
-
-            let file_path = format!("{}/{}", &file_dir, commit.hash);
-            debug!("Storing file in: {}", file_path);
-            fs::copy(&tmp_file_path, &file_path)?;
+            // fs::create_dir_all(&file_dir).expect("Could not create data file directory.");
+            let file_folder_path = std::path::Path::new(&file_dir).parent().unwrap();
+            if !file_folder_path.exists() {
+                fs::create_dir_all(&file_folder_path)
+                    .expect("Could not create temporary file directory.");
+            }
+            debug!("Storing file in: {}", file_dir);
+            fs::copy(&tmp_file_path, &file_dir)?;
         }
         for file in &commit.diff.updated {
             let tmp_file_path = format!("{}/{}", &tmp_files_path, file);
             debug!("Pulling file from: {}", tmp_file_path);
 
             let file_dir = format!("{}{}/data/{}", self.path, dataset.name, file);
-            let file_path = format!("{}/{}", &file_dir, commit.hash);
-            debug!("Storing file in: {}", file_path);
-            fs::copy(&tmp_file_path, &file_path)?;
+            debug!("Storing file in: {}", file_dir);
+            fs::copy(&tmp_file_path, &file_dir)?;
         }
 
         Ok(())
@@ -86,6 +88,7 @@ impl Storable for Local {
         if std::path::Path::new(&path).exists() {
             Err(DaemonError::AlreadyExists)
         } else {
+            debug!("trying to create a new dataset..");
             fs::create_dir_all(&path)?;
             fs::create_dir_all(format!("{}/data", &path))?;
             fs::create_dir_all(format!("{}/versions", &path))?;
