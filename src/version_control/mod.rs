@@ -61,7 +61,7 @@ pub fn create_dataset(dataset: &Dataset) -> Result<(), DaemonError> {
     Ok(())
 }
 
-pub fn create_commit(dataset: &Dataset, tmp_path: &String) -> Result<(), DaemonError> {
+pub fn create_commit(dataset: &Dataset, tmp_path: &String) -> Result<Commit, DaemonError> {
     let mut vtree = dataset.backend.get_vtree(&dataset.name)?.clone();
 
     let temp_commit_file = format!("{}/commit", tmp_path);
@@ -148,7 +148,7 @@ pub fn create_commit(dataset: &Dataset, tmp_path: &String) -> Result<(), DaemonE
         .backend
         .store_committed_files(&dataset, &commit, tmp_path.to_string())?;
 
-    Ok(())
+    Ok(commit)
 }
 
 pub fn create_branch(dataset: &Dataset, branch: &Branch) -> Result<(), DaemonError> {

@@ -9,7 +9,9 @@ use crate::error::DaemonError;
 use crate::utils;
 use async_std::prelude::*;
 use futures::StreamExt;
+use serde_json;
 use serde_json::json;
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
@@ -217,10 +219,17 @@ async fn create_commit_with_data(
 
     // Done uploading. Now parse the commit
 
-    version_control::create_commit(&dataset, &temp_path)?;
+    let commit = version_control::create_commit(&dataset, &temp_path)?;
     std::fs::remove_dir_all(&temp_path)?;
 
-    Ok(HttpResponse::Ok().finish())
+    let vtree = dataset.backend.get_vtree(&dataset.name)?;
+    let branch = dataset.backend.get_branch(&dataset.name, &commit.branch)?;
+
+    let mut response_map: HashMap<String, serde_json::Value> = HashMap::new();
+    response_map.insert("vtree".to_owned(), serde_json::to_value(&vtree)?);
+    response_map.insert("branch".to_owned(), serde_json::to_value(&branch)?);
+
+    Ok(HttpResponse::Ok().json(response_map))
 }
 
 #[post("/reset_state")]
