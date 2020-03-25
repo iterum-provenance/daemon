@@ -5,6 +5,12 @@ use crate::utils::create_random_hash;
 use std::collections::HashMap;
 use std::fs;
 
+pub mod dataset;
+pub mod error;
+
+pub mod branch;
+pub mod commit;
+
 pub fn create_dataset(dataset: &Dataset) -> Result<(), DaemonError> {
     let mut tree: HashMap<String, VersionTreeNode> = HashMap::new();
     let root_commit_hash = create_random_hash();
@@ -14,7 +20,7 @@ pub fn create_dataset(dataset: &Dataset) -> Result<(), DaemonError> {
         hash: root_commit_hash.to_string(),
         parent: None,
         branch: master_branch_hash.to_string(),
-        name: Some("root".to_owned()),
+        name: "root".to_owned(),
         description: "".to_owned(),
         files: vec![],
         diff: Diff {
@@ -58,7 +64,7 @@ pub fn create_dataset(dataset: &Dataset) -> Result<(), DaemonError> {
 pub fn create_commit(dataset: &Dataset, tmp_path: &String) -> Result<(), DaemonError> {
     let mut vtree = dataset.backend.get_vtree(&dataset.name)?.clone();
 
-    let temp_commit_file = format!("{}/commit.json", tmp_path);
+    let temp_commit_file = format!("{}/commit", tmp_path);
     let commit_string: String = fs::read_to_string(temp_commit_file)?;
     let commit: Commit = serde_json::from_str(&commit_string)?;
 

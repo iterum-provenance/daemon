@@ -14,6 +14,9 @@ mod error;
 mod utils;
 mod version_control;
 
+#[cfg(test)]
+mod tests;
+
 #[get("/")]
 pub fn index() -> HttpResponse {
     let html = r#"<html>
@@ -45,13 +48,21 @@ async fn main() -> std::io::Result<()> {
     // }
     let t = sled::open(&cache_path).expect("Creation of cache db failed..");
 
-    let config = config::Config { cache: t };
+    use crate::version_control::dataset::VCDataset;
+    use std::collections::HashMap;
+    use std::sync::RwLock;
+    let state: HashMap<String, RwLock<VCDataset>> = HashMap::new();
+    let config = web::Data::new(config::Config {
+        cache: t,
+        state: state,
+    });
+
     // std::fs::create_dir_all(&config.storage_path).unwrap();
 
-    let config_clone = config.clone();
+    // let config_clone = config.clone();
     let mut server = HttpServer::new(move || {
         App::new()
-            .data(config_clone.clone())
+            .app_data(config.clone())
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {
                 let message = format!("Error when handling JSON: {:?}", err);
                 error!("{}", message);

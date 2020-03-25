@@ -13,3 +13,5 @@ Hoe interacten deze 2?
 Voor nu:
 * Een post die zowel de Json file, als de files POST.
 
+
+

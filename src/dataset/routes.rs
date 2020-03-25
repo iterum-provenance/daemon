@@ -219,7 +219,7 @@ async fn create_commit_with_data(
 }
 
 #[post("/reset_state")]
-async fn reset_state(config: web::Data<config::Config>) -> Result<HttpResponse, DaemonError> {
+pub async fn reset_state(config: web::Data<config::Config>) -> Result<HttpResponse, DaemonError> {
     debug!("Removing all state from the daemon.");
     for kv in config.cache.iter() {
         let (key, value) = kv?;

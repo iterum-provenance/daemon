@@ -9,7 +9,7 @@ pub enum ChangeType {
     Updated,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Diff {
     pub added: Vec<String>,
     pub removed: Vec<String>,
@@ -17,25 +17,25 @@ pub struct Diff {
                               // pub files: Vec<String>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Deprecated {
     pub value: bool,
     pub reason: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Commit {
     pub hash: String,
     pub parent: Option<String>,
     pub branch: String,
-    pub name: Option<String>,
+    pub name: String,
     pub description: String,
     pub files: Vec<String>,
     pub diff: Diff,
     pub deprecated: Deprecated,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Branch {
     pub hash: String,
     pub name: String,

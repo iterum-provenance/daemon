@@ -11,13 +11,13 @@ pub struct Local {
     pub path: String,
 }
 
-impl Local {
-    // pub fn new(path: &String) -> Local {
-    //     Local {
-    //         path: path.to_string(),
-    //     }
-    // }
-}
+// impl Local {
+//     // pub fn new(path: &String) -> Local {
+//     //     Local {
+//     //         path: path.to_string(),
+//     //     }
+//     // }
+// }
 
 impl Storable for Local {
     fn store_committed_files(
