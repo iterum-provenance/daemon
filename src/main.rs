@@ -17,21 +17,6 @@ mod version_control;
 #[cfg(test)]
 mod tests;
 
-#[get("/")]
-pub fn index() -> HttpResponse {
-    let html = r#"<html>
-        <head><title>Upload Test</title></head>
-        <body>
-            <form action="/1/data" method="post" enctype="multipart/form-data" target="_self">
-                <input type="file" multiple name="file"/>
-                <input type="submit" value="Submit"></input>
-            </form>
-        </body>
-    </html>"#;
-
-    HttpResponse::Ok().body(html)
-}
-
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
@@ -72,7 +57,6 @@ async fn main() -> std::io::Result<()> {
                 )
                 .into()
             }))
-            .service(index)
             .configure(dataset::init_routes)
     });
 

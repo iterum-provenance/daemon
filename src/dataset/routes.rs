@@ -9,6 +9,7 @@ use crate::error::DaemonError;
 use crate::utils;
 use async_std::prelude::*;
 use futures::StreamExt;
+use serde_json::json;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
@@ -174,6 +175,10 @@ async fn create_commit_with_data(
 ) -> Result<HttpResponse, DaemonError> {
     let dataset_path = path.to_string();
     info!("Posting commit with data to dataset {}", &dataset_path);
+
+    // debug!("Acquiring lock for {}", &dataset_path);
+    // config.state.get(&dataset_path)?;
+
     let dataset: Dataset = config
         .cache
         .get(&dataset_path)?
@@ -232,6 +237,20 @@ pub async fn reset_state(config: web::Data<config::Config>) -> Result<HttpRespon
     Ok(HttpResponse::Ok().finish())
 }
 
+#[get("/")]
+pub async fn get_datasets(config: web::Data<config::Config>) -> Result<HttpResponse, DaemonError> {
+    debug!("Retrieving all datasets.");
+    let dataset_names: Vec<String> = config
+        .cache
+        .iter()
+        .map(|kv| {
+            let dataset: Dataset = kv.unwrap().1.into();
+            dataset.name
+        })
+        .collect();
+    Ok(HttpResponse::Ok().json(json!(dataset_names)))
+}
+
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(delete_dataset);
     cfg.service(get_dataset);
@@ -243,4 +262,5 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(get_commit);
     cfg.service(create_commit_with_data);
     cfg.service(reset_state);
+    cfg.service(get_datasets);
 }

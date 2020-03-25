@@ -1,13 +1,7 @@
 use crate::backend::local::Local;
 use crate::backend::Backend;
-use crate::dataset::models::{
-    Branch, Commit, Dataset, Deprecated, Diff, VersionTree, VersionTreeNode,
-};
-use crate::utils::create_random_hash;
+use crate::dataset::models::Dataset;
 use crate::version_control::dataset::VCDataset;
-use crate::version_control::error::VCErrorMessage;
-use crate::version_control::error::VersionControlError;
-use std::collections::HashMap;
 
 pub fn create_new_dataset() -> VCDataset {
     let dataset_model = Dataset {
