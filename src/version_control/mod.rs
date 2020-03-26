@@ -127,7 +127,7 @@ pub fn create_commit(dataset: &Dataset, tmp_path: &String) -> Result<Commit, Dae
 
     // Create a new Vtree node, and add to the tree.
     let vtree_node = VersionTreeNode {
-        name: "".to_owned(),
+        name: commit.name.to_string(),
         branch: commit.branch.to_string(),
         children: vec![],
         parent: Some(parent.to_owned()),
