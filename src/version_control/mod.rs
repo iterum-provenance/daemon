@@ -76,9 +76,10 @@ pub fn create_commit(dataset: &Dataset, tmp_path: &String) -> Result<Commit, Dae
     }
 
     // Check whether a branch file is present
-    let temp_branch_file = format!("{}/branch.json", tmp_path);
+    let temp_branch_file = format!("{}/branch", tmp_path);
 
     let mut branch = if std::path::Path::new(&temp_branch_file).exists() {
+        debug!("Creating branch!");
         // Create the branch
         let branch_string: String = fs::read_to_string(temp_branch_file)?;
         let branch: Branch = serde_json::from_str(&branch_string)?;

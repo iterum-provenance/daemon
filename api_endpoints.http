@@ -81,24 +81,24 @@ Accept: application/json
 
 preamble which should be ignored...
 --MyBoundary
-Content-Disposition: form-data; name="file"; filename="branch.json"
+Content-Disposition: form-data; name="branch.json"; filename="branch"
 Content-Type: application/json
 
 < data/branch.json
 --MyBoundary
-Content-Disposition: form-data; name="file"; filename="commit.json"
+Content-Disposition: form-data; name="commit.json"; filename="commit"
 Content-Type: application/json
 
 < data/commit.json
 
 --MyBoundary
-Content-Disposition: form-data; name="file"; filename="cat.1.jpg/4"
+Content-Disposition: form-data; name="cat.1.jpg"; filename="cat.1.jpg/4"
 Content-Type: image/jpeg
 
 < data/train/cats/cat.1.jpg
 
 --MyBoundary
-Content-Disposition: form-data; name="file"; filename="cat.2.jpg/4"
+Content-Disposition: form-data; name="cat.2.jpg"; filename="cat.2.jpg/4"
 Content-Type: image/jpeg
 
 < data/train/cats/cat.2.jpg
