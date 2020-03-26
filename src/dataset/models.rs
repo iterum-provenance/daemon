@@ -56,7 +56,7 @@ pub struct VersionTree {
     pub branches: HashMap<String, String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Dataset {
     pub name: String,
     #[serde(flatten)]

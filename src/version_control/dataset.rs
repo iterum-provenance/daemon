@@ -6,9 +6,10 @@ use crate::dataset::models::{
     Branch, Commit, Dataset, Deprecated, Diff, VersionTree, VersionTreeNode,
 };
 use crate::utils::create_random_hash;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct VCDataset {
     pub dataset: Dataset,
     pub commits: HashMap<String, Commit>,
@@ -29,7 +30,7 @@ pub struct VCDataset {
 // Vervolgens kan de caller de nieuwe dataset opslaan.
 
 impl VCDataset {
-    pub fn new(dataset: Dataset) -> VCDataset {
+    pub fn new(dataset: &Dataset) -> VCDataset {
         let mut tree: HashMap<String, VersionTreeNode> = HashMap::new();
         let root_commit_hash = create_random_hash();
         let master_branch_hash = create_random_hash();
@@ -76,7 +77,7 @@ impl VCDataset {
         branch_map.insert(master_branch_hash.to_string(), master_branch);
 
         VCDataset {
-            dataset,
+            dataset: dataset.clone(),
             commits: commit_map,
             branches: branch_map,
             version_tree,

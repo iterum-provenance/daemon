@@ -1,12 +1,13 @@
 use super::storable::Storable;
 use crate::dataset::{Branch, Commit, Dataset, VersionTree};
 use crate::error::DaemonError;
+use crate::version_control::dataset::VCDataset;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Local {
     pub path: String,
 }
@@ -179,5 +180,30 @@ impl Storable for Local {
                 _ => Err(DaemonError::Io(error)),
             },
         }
+    }
+
+    fn save_vcdataset(&self, vcdataset: &VCDataset) -> Result<(), DaemonError> {
+        // dataset.
+        vcdataset
+            .dataset
+            .backend
+            .create_dataset(&vcdataset.dataset)?;
+        vcdataset
+            .dataset
+            .backend
+            .set_vtree(&vcdataset.dataset.name, &vc_dataset.version_tree)?;
+        dataset.backend.set_branch(&dataset.name, &master_branch)?;
+        dataset.backend.create_commit(&dataset.name, &root_commit)?;
+
+        let dataset_path = vcdataset.dataset.backend.path;
+        let path = format!(
+            "{}{}/versions/{}.json",
+            self.path, dataset_path, commit.hash
+        );
+        let string = serde_json::to_string_pretty(commit)?;
+        let mut commit_file = File::create(path)?;
+        commit_file.write_all(&string.as_bytes())?;
+
+        Ok(())
     }
 }

@@ -8,7 +8,7 @@ use storable::Storable;
 pub mod local;
 pub mod storable;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "backend", content = "credentials")]
 pub enum Backend {
     Local(Local),

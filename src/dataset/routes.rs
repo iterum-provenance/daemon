@@ -2,7 +2,7 @@ use crate::config;
 use crate::dataset::{Branch, Dataset, VersionTree};
 use crate::version_control;
 use actix_multipart::Multipart;
-use actix_web::{delete, get, post, web, HttpResponse};
+use actix_web::{delete, get, post, web, HttpResponse, ResponseError};
 
 use crate::backend::storable::Storable;
 use crate::error::DaemonError;
@@ -15,7 +15,9 @@ use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
+use std::sync::RwLock;
 use std::time::Instant;
+use version_control::dataset::VCDataset;
 
 #[get("/{dataset}/file/{commit}/{file}")]
 async fn get_file(
@@ -57,8 +59,19 @@ async fn create_dataset(
     info!("Creating new dataset with name {:?}", dataset.name);
     let dataset = dataset.into_inner();
 
-    version_control::create_dataset(&dataset)?;
-    config.cache.insert(&dataset.name, &dataset)?;
+    // version_control::create_dataset(&dataset)?;
+    // config.cache.insert(&dataset.name, &dataset)?;
+    let vc_dataset = VCDataset::new(&dataset);
+
+    // Acquire write lock to the cache, and write to the map.
+    {
+        let mut dataset_map = config.state.dbs.write().unwrap();
+
+        dataset_map.insert(dataset.name.to_string(), RwLock::new(vc_dataset));
+
+        // Write to the backend of the dataset
+    }
+    config.cache.insert(b"dbs", &config.state)?;
 
     Ok(HttpResponse::Ok().json(&dataset))
 }
@@ -235,13 +248,26 @@ async fn create_commit_with_data(
 #[post("/reset_state")]
 pub async fn reset_state(config: web::Data<config::Config>) -> Result<HttpResponse, DaemonError> {
     debug!("Removing all state from the daemon.");
-    for kv in config.cache.iter() {
-        let (key, value) = kv?;
-        let dataset: Dataset = value.into();
-        debug!("Present in db: {:?}", dataset);
-        dataset.backend.remove_dataset(&dataset.name).unwrap();
-        config.cache.remove(key).unwrap();
+    config.cache.remove(b"dbs").unwrap();
+    let dbs = config::MemoryCache {
+        dbs: RwLock::new(HashMap::new()),
+    };
+    config.cache.insert(b"dbs", &dbs).unwrap();
+    // config.state.dbs.write().unwrap();
+    let mut dataset_map = config.state.dbs.write().unwrap();
+    for kv in dataset_map.iter() {
+        debug!("{:?}", kv);
     }
+
+    dataset_map.clear();
+
+    // for kv in config.cache.iter() {
+    //     let (key, value) = kv?;
+    //     let dataset: Dataset = value.into();
+    //     debug!("Present in db: {:?}", dataset);
+    //     dataset.backend.remove_dataset(&dataset.name).unwrap();
+    //     config.cache.remove(key).unwrap();
+    // }
 
     Ok(HttpResponse::Ok().finish())
 }

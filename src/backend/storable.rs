@@ -1,5 +1,6 @@
 use crate::dataset::{Branch, Commit, Dataset, VersionTree};
 use crate::error::DaemonError;
+use crate::version_control::dataset::VCDataset;
 
 pub trait Storable {
     /// Trait for backends which is used to store the types to the backend.
@@ -34,4 +35,5 @@ pub trait Storable {
         commit_hash: &String,
         filename: &String,
     ) -> Result<Vec<u8>, DaemonError>;
+    fn save_vcdataset(&self, dataset: &VCDataset) -> Result<(), DaemonError>;
 }

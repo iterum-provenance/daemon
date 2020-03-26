@@ -1,11 +1,14 @@
 #[macro_use]
 extern crate log;
+use crate::version_control::dataset::VCDataset;
 use actix_web::{get, App, HttpServer};
 use actix_web::{web, HttpResponse};
 use dotenv::dotenv;
 use listenfd::ListenFd;
 use sled;
+use std::collections::HashMap;
 use std::env;
+use std::sync::RwLock;
 
 mod backend;
 pub mod config;
@@ -33,10 +36,23 @@ async fn main() -> std::io::Result<()> {
     // }
     let t = sled::open(&cache_path).expect("Creation of cache db failed..");
 
-    use crate::version_control::dataset::VCDataset;
-    use std::collections::HashMap;
-    use std::sync::RwLock;
-    let state: HashMap<String, RwLock<VCDataset>> = HashMap::new();
+    let state = match t.get(b"dbs").unwrap() {
+        Some(ivec) => ivec.into(),
+        None => {
+            let dbs = config::MemoryCache {
+                dbs: RwLock::new(HashMap::new()),
+            };
+            t.insert(b"dbs", &dbs).unwrap();
+            dbs
+        }
+    };
+    // if t.contains_key(b"dbs") {
+    //     let state: config::MemoryCache = ;
+    // } else {
+    //     t.get(b"dbs").unwrap().unwrap()
+    // }
+    // match t.get(b"dbs").unwrap() ;
+
     let config = web::Data::new(config::Config {
         cache: t,
         state: state,
