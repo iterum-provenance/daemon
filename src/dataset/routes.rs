@@ -58,18 +58,15 @@ async fn create_dataset(
 ) -> Result<HttpResponse, DaemonError> {
     info!("Creating new dataset with name {:?}", dataset.name);
     let dataset = dataset.into_inner();
-
-    // version_control::create_dataset(&dataset)?;
-    // config.cache.insert(&dataset.name, &dataset)?;
     let vc_dataset = VCDataset::new(&dataset);
 
     // Acquire write lock to the cache, and write to the map.
     {
         let mut dataset_map = config.state.dbs.write().unwrap();
+        // Write to the backend of the dataset
+        dataset.backend.save_vcdataset(&dataset.name, &vc_dataset)?;
 
         dataset_map.insert(dataset.name.to_string(), RwLock::new(vc_dataset));
-
-        // Write to the backend of the dataset
     }
     config.cache.insert(b"dbs", &config.state)?;
 
@@ -83,13 +80,32 @@ async fn delete_dataset(
 ) -> Result<HttpResponse, DaemonError> {
     info!("Deleting dataset with path {:?}", path);
     let dataset_path = path.to_string();
-    let dataset: Dataset = config
-        .cache
-        .get(&dataset_path)?
-        .ok_or_else(|| DaemonError::NotFound)?
-        .into();
-    dataset.backend.remove_dataset(&path)?;
-    config.cache.remove(&dataset_path)?;
+
+    // // Acquire write lock to the cache, and write to the map.
+    // let response = {
+    //     let mut dataset_map = config.state.dbs.write().unwrap();
+    //     // Write to the backend of the dataset
+    //     let response = match dataset_map.get(&dataset_path) {
+    //         Some(dataset_lock) => {
+    //             let dataset = dataset_lock.write().unwrap();
+    //             dataset.dataset.backend.remove_dataset(&dataset_path);
+    //             HttpResponse::Ok().finish();
+    //         }
+    //         None => {
+    //             HttpResponse::NotFound().finish()
+
+    //         }
+    //     };
+
+    // }
+
+    // let dataset: Dataset = config
+    //     .cache
+    //     .get(&dataset_path)?
+    //     .ok_or_else(|| DaemonError::NotFound)?
+    //     .into();
+    // dataset.backend.remove_dataset(&path)?;
+    // config.cache.remove(&dataset_path)?;
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -100,6 +116,13 @@ async fn get_dataset(
 ) -> Result<HttpResponse, DaemonError> {
     info!("Getting dataset with path {:?}", path);
     let dataset_path = path.to_string();
+
+    let dataset_map = config.state.dbs.read().unwrap();
+    let vcdataset = match dataset_map.get(&dataset_path) {
+        Some(dataset) => dataset,
+        None => return Ok(HttpResponse::NotFound().finish()),
+    };
+
     let dataset: Dataset = config
         .cache
         .get(&dataset_path)?

@@ -35,5 +35,8 @@ pub trait Storable {
         commit_hash: &String,
         filename: &String,
     ) -> Result<Vec<u8>, DaemonError>;
-    fn save_vcdataset(&self, dataset: &VCDataset) -> Result<(), DaemonError>;
+    fn save_vcdataset(&self, dataset_path: &String, dataset: &VCDataset)
+        -> Result<(), DaemonError>;
+    fn read_vcdataset(&self, dataset_path: &String) -> Result<VCDataset, DaemonError>;
+    fn remove_vcdataset(&self, dataset_path: &String) -> Result<(), DaemonError>;
 }

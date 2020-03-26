@@ -182,28 +182,39 @@ impl Storable for Local {
         }
     }
 
-    fn save_vcdataset(&self, vcdataset: &VCDataset) -> Result<(), DaemonError> {
-        // dataset.
-        vcdataset
-            .dataset
-            .backend
-            .create_dataset(&vcdataset.dataset)?;
-        vcdataset
-            .dataset
-            .backend
-            .set_vtree(&vcdataset.dataset.name, &vc_dataset.version_tree)?;
-        dataset.backend.set_branch(&dataset.name, &master_branch)?;
-        dataset.backend.create_commit(&dataset.name, &root_commit)?;
+    fn save_vcdataset(
+        &self,
+        dataset_path: &String,
+        vcdataset: &VCDataset,
+    ) -> Result<(), DaemonError> {
+        let path = format!("{}{}", self.path, dataset_path);
+        debug!("Path for dataset: {}", path);
+        if std::path::Path::new(&path).exists() {
+            Err(DaemonError::AlreadyExists)
+        } else {
+            debug!("trying to create a new dataset..");
+            fs::create_dir_all(&path)?;
+            fs::create_dir_all(format!("{}/data", &path))?;
+            let string = serde_json::to_string_pretty(vcdataset)?;
+            let mut dataset_file = File::create(format!("{}/vcdataset.json", path))?;
+            dataset_file.write_all(&string.as_bytes())?;
 
-        let dataset_path = vcdataset.dataset.backend.path;
-        let path = format!(
-            "{}{}/versions/{}.json",
-            self.path, dataset_path, commit.hash
-        );
-        let string = serde_json::to_string_pretty(commit)?;
-        let mut commit_file = File::create(path)?;
-        commit_file.write_all(&string.as_bytes())?;
+            Ok(())
+        }
+    }
 
+    fn read_vcdataset(&self, dataset_path: &String) -> Result<VCDataset, DaemonError> {
+        let path = format!("{}{}/vcdataset.json", self.path, dataset_path);
+
+        let string = fs::read_to_string(path)?;
+        let vcdataset: VCDataset = serde_json::from_str(&string)?;
+
+        Ok(vcdataset)
+    }
+
+    fn remove_vcdataset(&self, dataset_path: &String) -> Result<(), DaemonError> {
+        let path = format!("{}{}", self.path, dataset_path);
+        fs::remove_dir_all(path)?;
         Ok(())
     }
 }

@@ -1,3 +1,4 @@
+use crate::error::DaemonError;
 use crate::version_control::dataset::VCDataset;
 use serde::{Deserialize, Serialize};
 use sled::Db;
@@ -25,5 +26,11 @@ impl From<sled::IVec> for MemoryCache {
     fn from(ivec: sled::IVec) -> MemoryCache {
         let string = String::from_utf8(ivec.to_vec()).expect("Converting bytes to string failed.");
         serde_json::from_str(&string).expect("Deserializing cache failed")
+    }
+}
+
+impl MemoryCache {
+    fn add_something(&self) -> Result<(), DaemonError> {
+        Ok(())
     }
 }

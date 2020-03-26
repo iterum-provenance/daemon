@@ -1,6 +1,7 @@
 use crate::dataset::{Branch, Commit, Dataset, VersionTree};
 use crate::error::DaemonError;
 
+use crate::version_control::dataset::VCDataset;
 use local::Local;
 use serde::{Deserialize, Serialize};
 use storable::Storable;
@@ -108,6 +109,30 @@ impl Storable for Backend {
     ) -> Result<Vec<u8>, DaemonError> {
         match self {
             Backend::Local(backend) => backend.get_file(dataset_path, commit_hash, filename),
+            _ => unimplemented!(),
+        }
+    }
+
+    fn save_vcdataset(
+        &self,
+        dataset_path: &String,
+        dataset: &VCDataset,
+    ) -> Result<(), DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.save_vcdataset(dataset_path, dataset),
+            _ => unimplemented!(),
+        }
+    }
+    fn read_vcdataset(&self, dataset_path: &String) -> Result<VCDataset, DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.read_vcdataset(dataset_path),
+            _ => unimplemented!(),
+        }
+    }
+
+    fn remove_vcdataset(&self, dataset_path: &String) -> Result<(), DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.remove_vcdataset(dataset_path),
             _ => unimplemented!(),
         }
     }
