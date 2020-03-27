@@ -64,19 +64,4 @@ pub struct Dataset {
     pub description: String,
 }
 
-impl From<&Dataset> for sled::IVec {
-    fn from(dataset: &Dataset) -> sled::IVec {
-        debug!("Serializing struct {:?}", dataset);
-        let string = serde_json::to_string(&dataset).expect("Serializing failed");
-        string.into_bytes().into()
-    }
-}
-
-impl From<sled::IVec> for Dataset {
-    fn from(ivec: sled::IVec) -> Dataset {
-        let string = String::from_utf8(ivec.to_vec()).expect("Converting bytes to string failed.");
-        serde_json::from_str(&string).expect("Deserializing dataset failed")
-    }
-}
-
 impl Dataset {}

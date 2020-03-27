@@ -1,7 +1,3 @@
-use super::error::VCErrorMessage;
-use super::error::VersionControlError;
-use crate::backend::local::Local;
-use crate::backend::Backend;
 use crate::dataset::models::{
     Branch, Commit, Dataset, Deprecated, Diff, VersionTree, VersionTreeNode,
 };
@@ -9,12 +5,27 @@ use crate::utils::create_random_hash;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VCDataset {
     pub dataset: Dataset,
     pub commits: HashMap<String, Commit>,
     pub branches: HashMap<String, Branch>,
     pub version_tree: VersionTree,
+}
+
+impl From<&VCDataset> for sled::IVec {
+    fn from(dataset: &VCDataset) -> sled::IVec {
+        debug!("Serializing struct {:?}", dataset);
+        let string = serde_json::to_string(&dataset).expect("Serializing failed");
+        string.into_bytes().into()
+    }
+}
+
+impl From<sled::IVec> for VCDataset {
+    fn from(ivec: sled::IVec) -> VCDataset {
+        let string = String::from_utf8(ivec.to_vec()).expect("Converting bytes to string failed.");
+        serde_json::from_str(&string).expect("Deserializing dataset failed")
+    }
 }
 
 // Dataset struct waar alle json files in zitten wat je ook op de disc opslaat.
@@ -65,16 +76,13 @@ impl VCDataset {
         };
         let mut branches = HashMap::new();
         branches.insert(master_branch.hash.clone(), "master".to_owned());
-        let version_tree = VersionTree {
-            tree: tree,
-            branches: branches,
-        };
+        let version_tree = VersionTree { tree, branches };
 
         let mut commit_map: HashMap<String, Commit> = HashMap::new();
-        commit_map.insert(root_commit_hash.to_string(), root_commit);
+        commit_map.insert(root_commit_hash, root_commit);
 
         let mut branch_map: HashMap<String, Branch> = HashMap::new();
-        branch_map.insert(master_branch_hash.to_string(), master_branch);
+        branch_map.insert(master_branch_hash, master_branch);
 
         VCDataset {
             dataset: dataset.clone(),

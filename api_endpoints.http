@@ -1,4 +1,4 @@
-@address = http://localhost:3000
+@address = http://localhost:3001
 @dataset_path = test_dataset
 @initial_commit_hash = initial_commit
 @commit_hash = 4
@@ -28,7 +28,7 @@ content-type: application/json
 GET {{address}}/{{dataset_path}}/vtree HTTP/1.1
 
 ### Get a commit
-GET {{address}}/{{dataset_path}}/commit/4iuDjHdn4ewSZC7fJtLWHzw083PLr5Eo HTTP/1.1
+GET {{address}}/{{dataset_path}}/commit/76PV4wMY0YBHEwkguNDvMCSkWupbULAe HTTP/1.1
 
 ### Create new branch
 POST {{address}}/{{dataset_path}}/branch HTTP/1.1

@@ -1,5 +1,5 @@
 use super::storable::Storable;
-use crate::dataset::{Branch, Commit, Dataset, VersionTree};
+use crate::dataset::{Commit, Dataset};
 use crate::error::DaemonError;
 use crate::version_control::dataset::VCDataset;
 use serde::{Deserialize, Serialize};
@@ -11,14 +11,6 @@ use std::io::Write;
 pub struct Local {
     pub path: String,
 }
-
-// impl Local {
-//     // pub fn new(path: &String) -> Local {
-//     //     Local {
-//     //         path: path.to_string(),
-//     //     }
-//     // }
-// }
 
 impl Storable for Local {
     fn store_committed_files(
@@ -57,117 +49,11 @@ impl Storable for Local {
         Ok(())
     }
 
-    fn get_vtree(&self, dataset_path: &String) -> std::result::Result<VersionTree, DaemonError> {
-        let path = format!("{}{}/vtree.json", self.path, dataset_path);
-        let string = fs::read_to_string(path)?;
-        let vtree = serde_json::from_str(&string)?;
-        Ok(vtree)
-    }
-
-    fn set_vtree(
-        &self,
-        dataset_path: &String,
-        vtree: &VersionTree,
-    ) -> std::result::Result<(), DaemonError> {
-        let vtree_string = serde_json::to_string_pretty(vtree)?;
-        let path = format!("{}{}/vtree.json", self.path, dataset_path);
-        let mut vtree_file = File::create(path)?;
-        vtree_file.write_all(&vtree_string.as_bytes())?;
-        Ok(())
-    }
-
-    fn get_dataset(&self, dataset_path: &String) -> std::result::Result<Dataset, DaemonError> {
-        let path = format!("{}{}/dataset.json", self.path, dataset_path);
-        let string = fs::read_to_string(&path)?;
-        let dataset: Dataset = serde_json::from_str(&string)?;
-        Ok(dataset)
-    }
-
-    fn create_dataset(&self, dataset: &Dataset) -> std::result::Result<(), DaemonError> {
-        let path = format!("{}{}", self.path, dataset.name);
-        debug!("Path for dataset: {}", path);
-        if std::path::Path::new(&path).exists() {
-            Err(DaemonError::AlreadyExists)
-        } else {
-            debug!("trying to create a new dataset..");
-            fs::create_dir_all(&path)?;
-            fs::create_dir_all(format!("{}/data", &path))?;
-            fs::create_dir_all(format!("{}/versions", &path))?;
-            fs::create_dir_all(format!("{}/branches", &path))?;
-            fs::create_dir_all(format!("{}/runs", &path))?;
-            let string = serde_json::to_string_pretty(dataset)?;
-            let mut dataset_file = File::create(format!("{}/dataset.json", path))?;
-            dataset_file.write_all(&string.as_bytes())?;
-
-            Ok(())
-        }
-    }
-
-    fn remove_dataset(&self, dataset_path: &String) -> std::result::Result<(), DaemonError> {
-        let path = format!("{}{}", self.path, dataset_path);
-        fs::remove_dir_all(path)?;
-        Ok(())
-    }
-
-    fn get_branch(
-        &self,
-        dataset_path: &String,
-        branch_hash: &String,
-    ) -> Result<Branch, DaemonError> {
-        let path = format!(
-            "{}{}/branches/{}.json",
-            self.path, dataset_path, branch_hash
-        );
-        let string = fs::read_to_string(path)?;
-        let branch = serde_json::from_str(&string)?;
-        Ok(branch)
-    }
-
-    fn set_branch(
-        &self,
-        dataset_path: &std::string::String,
-        branch: &Branch,
-    ) -> Result<(), DaemonError> {
-        let path = format!(
-            "{}{}/branches/{}.json",
-            self.path, dataset_path, branch.hash
-        );
-        let string = serde_json::to_string_pretty(&branch)?;
-        let mut branch_file = File::create(path)?;
-        branch_file.write_all(&string.as_bytes())?;
-        Ok(())
-    }
-
-    fn get_commit(
-        &self,
-        dataset_path: &String,
-        commit_hash: &String,
-    ) -> Result<Commit, DaemonError> {
-        let path = format!(
-            "{}{}/versions/{}.json",
-            self.path, dataset_path, commit_hash
-        );
-        let string = fs::read_to_string(path)?;
-        let commit = serde_json::from_str(&string)?;
-        Ok(commit)
-    }
-
-    fn create_commit(&self, dataset_path: &String, commit: &Commit) -> Result<(), DaemonError> {
-        let path = format!(
-            "{}{}/versions/{}.json",
-            self.path, dataset_path, commit.hash
-        );
-        let string = serde_json::to_string_pretty(commit)?;
-        let mut commit_file = File::create(path)?;
-        commit_file.write_all(&string.as_bytes())?;
-        Ok(())
-    }
-
     fn get_file(
         &self,
-        dataset_path: &String,
-        commit_hash: &String,
-        filename: &String,
+        dataset_path: &str,
+        commit_hash: &str,
+        filename: &str,
     ) -> Result<Vec<u8>, DaemonError> {
         let file_path = format!(
             "{}{}/data/{}/{}",
@@ -182,28 +68,23 @@ impl Storable for Local {
         }
     }
 
-    fn save_vcdataset(
-        &self,
-        dataset_path: &String,
-        vcdataset: &VCDataset,
-    ) -> Result<(), DaemonError> {
+    fn save_vcdataset(&self, dataset_path: &str, vcdataset: &VCDataset) -> Result<(), DaemonError> {
         let path = format!("{}{}", self.path, dataset_path);
         debug!("Path for dataset: {}", path);
-        if std::path::Path::new(&path).exists() {
-            Err(DaemonError::AlreadyExists)
-        } else {
-            debug!("trying to create a new dataset..");
+        if !std::path::Path::new(&path).exists() {
             fs::create_dir_all(&path)?;
-            fs::create_dir_all(format!("{}/data", &path))?;
-            let string = serde_json::to_string_pretty(vcdataset)?;
-            let mut dataset_file = File::create(format!("{}/vcdataset.json", path))?;
-            dataset_file.write_all(&string.as_bytes())?;
-
-            Ok(())
         }
+        debug!("trying to create a new dataset..");
+        fs::create_dir_all(&path)?;
+        fs::create_dir_all(format!("{}/data", &path))?;
+        let string = serde_json::to_string_pretty(vcdataset)?;
+        let mut dataset_file = File::create(format!("{}/vcdataset.json", path))?;
+        dataset_file.write_all(&string.as_bytes())?;
+
+        Ok(())
     }
 
-    fn read_vcdataset(&self, dataset_path: &String) -> Result<VCDataset, DaemonError> {
+    fn read_vcdataset(&self, dataset_path: &str) -> Result<VCDataset, DaemonError> {
         let path = format!("{}{}/vcdataset.json", self.path, dataset_path);
 
         let string = fs::read_to_string(path)?;
@@ -212,9 +93,11 @@ impl Storable for Local {
         Ok(vcdataset)
     }
 
-    fn remove_vcdataset(&self, dataset_path: &String) -> Result<(), DaemonError> {
+    fn remove_vcdataset(&self, dataset_path: &str) -> Result<(), DaemonError> {
         let path = format!("{}{}", self.path, dataset_path);
-        fs::remove_dir_all(path)?;
-        Ok(())
+        match fs::remove_dir_all(path) {
+            Ok(()) => Ok(()),
+            Err(_) => Ok(()),
+        }
     }
 }

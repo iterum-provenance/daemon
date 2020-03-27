@@ -13,5 +13,5 @@ pub fn create_new_dataset() -> VCDataset {
         }),
         description: "niks".to_owned(),
     };
-    VCDataset::new(dataset_model)
+    VCDataset::new(&dataset_model)
 }

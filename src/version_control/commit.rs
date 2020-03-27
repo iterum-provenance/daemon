@@ -1,6 +1,6 @@
 use super::dataset::VCDataset;
 use super::error::{VCErrorMessage, VersionControlError};
-use crate::dataset::models::{Commit, Dataset, Deprecated, Diff, VersionTreeNode};
+use crate::dataset::models::{Commit, VersionTreeNode};
 
 impl VCDataset {
     pub fn add_commit(mut self, commit: &Commit) -> Result<VCDataset, VersionControlError> {
@@ -14,7 +14,7 @@ impl VCDataset {
             Some(parent) => parent,
             None => {
                 return Err(VersionControlError::CommitIncomplete(VCErrorMessage::new(
-                    format!("The parent commit does not exist in the version tree."),
+                    "The parent commit does not exist in the version tree.".to_string(),
                 )))
             }
         };
@@ -71,6 +71,7 @@ impl VCDataset {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dataset::models::{Deprecated, Diff};
     use crate::tests::create_new_dataset;
     use crate::utils::create_random_hash;
 
