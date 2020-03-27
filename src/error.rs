@@ -17,18 +17,7 @@ pub enum DaemonError {
     ParseError(ParseError),
     NotFound,
     AlreadyExists,
-    CommitError(CommitError),
-}
-
-#[derive(Debug)]
-pub struct CommitError {
-    message: String,
-}
-
-impl CommitError {
-    pub fn new(message: String) -> CommitError {
-        CommitError { message }
-    }
+    VersionControlError(String),
 }
 
 impl Error for DaemonError {}
@@ -43,7 +32,7 @@ impl fmt::Display for DaemonError {
             DaemonError::ParseError(err) => write!(f, "ParseError: {}", err),
             DaemonError::NotFound => write!(f, "Resource could not be found."),
             DaemonError::AlreadyExists => write!(f, "Resource already exists."),
-            DaemonError::CommitError(err) => write!(f, "Commit invalid: {}", err.message),
+            DaemonError::VersionControlError(err) => write!(f, "Version control error: {}", err),
         }
     }
 }
@@ -85,7 +74,9 @@ impl ResponseError for DaemonError {
     fn error_response(&self) -> HttpResponse {
         let status_code = match self {
             DaemonError::NotFound => StatusCode::NOT_FOUND,
-            DaemonError::AlreadyExists | DaemonError::CommitError(_) => StatusCode::CONFLICT,
+            DaemonError::VersionControlError(_) | DaemonError::AlreadyExists => {
+                StatusCode::CONFLICT
+            }
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
 

@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate log;
-use actix_web::{get, App, HttpServer};
 use actix_web::{web, HttpResponse};
+use actix_web::{App, HttpServer};
 use dotenv::dotenv;
 use listenfd::ListenFd;
 use sled;
@@ -25,26 +25,10 @@ async fn main() -> std::io::Result<()> {
     let mut listenfd = ListenFd::from_env();
 
     let cache_path = env::var("CACHE_PATH").expect("Cache path not set");
-
-    // Delete the cache if it exists. (For development purposes.)
-    // if std::path::Path::new(&cache_path).exists() {
-    //     std::fs::remove_dir_all(&cache_path).unwrap();
-    //     // std::fs::remove_dir_all(String::from("./storage/")).unwrap();
-    // }
     let t = sled::open(&cache_path).expect("Creation of cache db failed..");
 
-    use crate::version_control::dataset::VCDataset;
-    use std::collections::HashMap;
-    use std::sync::RwLock;
-    let state: HashMap<String, RwLock<VCDataset>> = HashMap::new();
-    let config = web::Data::new(config::Config {
-        cache: t,
-        state: state,
-    });
+    let config = web::Data::new(config::Config { cache: t });
 
-    // std::fs::create_dir_all(&config.storage_path).unwrap();
-
-    // let config_clone = config.clone();
     let mut server = HttpServer::new(move || {
         App::new()
             .app_data(config.clone())
