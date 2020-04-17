@@ -19,12 +19,12 @@ use std::time::Instant;
 use version_control::dataset::VCDataset;
 use version_control::error::VersionControlError;
 
-#[get("/{dataset}/file/{commit}/{file}")]
+#[get("/{dataset}/file/{file}/{commit}")]
 async fn get_file(
     config: web::Data<config::Config>,
     path: web::Path<(String, String, String)>,
 ) -> Result<HttpResponse, DaemonError> {
-    let (dataset_path, commit_hash, filename) = path.into_inner();
+    let (dataset_path, filename, commit_hash) = path.into_inner();
     info!(
         "Getting file {} from commit {} from dataset {}",
         filename, commit_hash, dataset_path
