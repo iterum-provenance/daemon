@@ -26,6 +26,7 @@ pub enum VersionControlError {
     BranchHashAlreadyExists,
     BranchHeadDoesNotExist,
     ParentCommitIsNotBranchHead,
+    PipelineHashAlreadyExists,
 }
 
 impl Error for VersionControlError {}
@@ -53,6 +54,9 @@ impl fmt::Display for VersionControlError {
             VersionControlError::ParentCommitIsNotBranchHead => {
                 write!(f, "The parent commit hash is not the head of the branch.")
             }
+            VersionControlError::PipelineHashAlreadyExists => {
+                write!(f, "The pipeline hash already exists.")
+            }
         }
     }
 }
@@ -68,6 +72,7 @@ impl ResponseError for VersionControlError {
             VersionControlError::BranchHeadDoesNotExist => StatusCode::CONFLICT,
             VersionControlError::BranchHashAlreadyExists => StatusCode::CONFLICT,
             VersionControlError::ParentCommitIsNotBranchHead => StatusCode::CONFLICT,
+            VersionControlError::PipelineHashAlreadyExists => StatusCode::CONFLICT,
         };
 
         let message = format!("{}", self);

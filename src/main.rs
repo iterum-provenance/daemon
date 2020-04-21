@@ -11,6 +11,7 @@ mod backend;
 pub mod config;
 mod dataset;
 mod error;
+mod pipeline;
 mod utils;
 mod version_control;
 
@@ -42,6 +43,7 @@ async fn main() -> std::io::Result<()> {
                 .into()
             }))
             .configure(dataset::init_routes)
+            .configure(pipeline::init_routes)
     });
 
     server = match listenfd.take_tcp_listener(0)? {

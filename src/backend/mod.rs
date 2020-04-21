@@ -61,4 +61,18 @@ impl Storable for Backend {
             _ => unimplemented!(),
         }
     }
+
+    fn store_pipeline_result_files(
+        &self,
+        dataset: &Dataset,
+        pipeline_result_hash: &str,
+        tmp_files_path: &str,
+    ) -> Result<(), std::io::Error> {
+        match self {
+            Backend::Local(backend) => {
+                backend.store_pipeline_result_files(dataset, pipeline_result_hash, tmp_files_path)
+            }
+            _ => unimplemented!(),
+        }
+    }
 }

@@ -1,6 +1,7 @@
 use crate::dataset::models::{
     Branch, Commit, Dataset, Deprecated, Diff, VersionTree, VersionTreeNode,
 };
+use crate::pipeline::models::PipelineResult;
 use crate::utils::create_random_hash;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -11,6 +12,7 @@ pub struct VCDataset {
     pub commits: HashMap<String, Commit>,
     pub branches: HashMap<String, Branch>,
     pub version_tree: VersionTree,
+    pub pipeline_results: HashMap<String, PipelineResult>,
 }
 
 impl From<&VCDataset> for sled::IVec {
@@ -83,12 +85,14 @@ impl VCDataset {
 
         let mut branch_map: HashMap<String, Branch> = HashMap::new();
         branch_map.insert(master_branch_hash, master_branch);
+        let mut pipeline_results: HashMap<String, PipelineResult> = HashMap::new();
 
         VCDataset {
             dataset: dataset.clone(),
             commits: commit_map,
             branches: branch_map,
             version_tree,
+            pipeline_results,
         }
     }
 }
