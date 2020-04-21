@@ -1,5 +1,6 @@
 use crate::dataset::{Commit, Dataset};
 use crate::error::DaemonError;
+use crate::pipeline::models::PipelineResult;
 use crate::version_control::dataset::VCDataset;
 
 pub trait Storable {
@@ -25,7 +26,7 @@ pub trait Storable {
     fn store_pipeline_result_files(
         &self,
         dataset: &Dataset,
-        pipeline_result_hash: &str,
+        pipeline_result: &PipelineResult,
         tmp_files_path: &str,
     ) -> Result<(), std::io::Error>;
 }

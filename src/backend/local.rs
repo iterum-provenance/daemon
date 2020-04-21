@@ -1,6 +1,7 @@
 use super::storable::Storable;
 use crate::dataset::{Commit, Dataset};
 use crate::error::DaemonError;
+use crate::pipeline::models::PipelineResult;
 use crate::version_control::dataset::VCDataset;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -104,9 +105,29 @@ impl Storable for Local {
     fn store_pipeline_result_files(
         &self,
         dataset: &Dataset,
-        pipeline_result_hash: &str,
+        pipeline_result: &PipelineResult,
         tmp_files_path: &str,
     ) -> Result<(), std::io::Error> {
+        // // Create the new files wherever necessary
+        debug!("Adding files with names:");
+        for file in &pipeline_result.files {
+            let tmp_file_path = format!("{}/{}", &tmp_files_path, file);
+            debug!("Pulling file from: {}", tmp_file_path);
+
+            let file_dir = format!(
+                "{}{}/runs/{}",
+                self.path, dataset.name, pipeline_result.hash
+            );
+            // fs::create_dir_all(&file_dir).expect("Could not create data file directory.");
+            let file_folder_path = std::path::Path::new(&file_dir).parent().unwrap();
+            if !file_folder_path.exists() {
+                fs::create_dir_all(&file_folder_path)
+                    .expect("Could not create temporary file directory.");
+            }
+            debug!("Storing file in: {}", file_dir);
+            fs::copy(&tmp_file_path, &file_dir)?;
+        }
+
         Ok(())
     }
 }

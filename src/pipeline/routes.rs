@@ -149,7 +149,7 @@ async fn add_result(
     // Now move the files to the backend
     vc_dataset.dataset.backend.store_pipeline_result_files(
         &vc_dataset.dataset,
-        &pipeline_result.hash,
+        &pipeline_result,
         &temp_path.to_string(),
     )?;
 

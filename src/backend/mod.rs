@@ -1,6 +1,7 @@
 use crate::dataset::{Commit, Dataset};
 use crate::error::DaemonError;
 
+use crate::pipeline::models::PipelineResult;
 use crate::version_control::dataset::VCDataset;
 use local::Local;
 use serde::{Deserialize, Serialize};
@@ -65,12 +66,12 @@ impl Storable for Backend {
     fn store_pipeline_result_files(
         &self,
         dataset: &Dataset,
-        pipeline_result_hash: &str,
+        pipeline_result: &PipelineResult,
         tmp_files_path: &str,
     ) -> Result<(), std::io::Error> {
         match self {
             Backend::Local(backend) => {
-                backend.store_pipeline_result_files(dataset, pipeline_result_hash, tmp_files_path)
+                backend.store_pipeline_result_files(dataset, pipeline_result, tmp_files_path)
             }
             _ => unimplemented!(),
         }
