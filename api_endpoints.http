@@ -19,7 +19,7 @@ content-type: application/json
   "name": "{{dataset_path}}",
   "backend": "Local",
   "credentials": {
-      "path": "./storage/"
+      "path": "/localStorage/"
   },
   "description": "This dataset contains test images!"
 }

@@ -105,29 +105,40 @@ impl Storable for Local {
     fn store_pipeline_result_files(
         &self,
         dataset: &Dataset,
-        pipeline_result: &PipelineResult,
+        pipeline_result_paths: &[(String, String)],
+        pipeline_hash: &str,
         tmp_files_path: &str,
     ) -> Result<(), std::io::Error> {
-        // // Create the new files wherever necessary
         debug!("Adding files with names:");
-        for file in &pipeline_result.files {
-            let tmp_file_path = format!("{}/{}", &tmp_files_path, file);
-            debug!("Pulling file from: {}", tmp_file_path);
+        for file in pipeline_result_paths {
+            let (filename, filepath) = file;
+            debug!("Pulling file from: {}", filepath);
 
-            let file_dir = format!(
-                "{}{}/runs/{}",
-                self.path, dataset.name, pipeline_result.hash
-            );
-            // fs::create_dir_all(&file_dir).expect("Could not create data file directory.");
-            let file_folder_path = std::path::Path::new(&file_dir).parent().unwrap();
+            let file_dir = format!("{}{}/runs/{}", self.path, dataset.name, pipeline_hash);
+            let file_folder_path = std::path::Path::new(&file_dir);
+            debug!("Dir path: {:?}", file_folder_path);
             if !file_folder_path.exists() {
                 fs::create_dir_all(&file_folder_path)
                     .expect("Could not create temporary file directory.");
             }
-            debug!("Storing file in: {}", file_dir);
-            fs::copy(&tmp_file_path, &file_dir)?;
+            let new_filepath = format!("{}/{}", file_dir, filename);
+            debug!("Storing file in: {}", new_filepath);
+            fs::copy(&filepath, &new_filepath)?;
         }
 
         Ok(())
+    }
+
+    fn get_pipeline_results(
+        &self,
+        dataset_path: &str,
+        pipeline_hash: &str,
+    ) -> Result<Vec<String>, DaemonError> {
+        let path = format!("{}{}/runs/{}", self.path, dataset_path, pipeline_hash);
+        let files: Vec<String> = fs::read_dir(path)?
+            .map(|direntry| direntry.unwrap().path().to_str().unwrap().into())
+            .collect();
+
+        Ok(files)
     }
 }

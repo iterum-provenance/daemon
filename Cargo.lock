@@ -562,6 +562,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "daemon"
+version = "0.1.0"
+dependencies = [
+ "actix-multipart",
+ "actix-rt",
+ "actix-web",
+ "async-std",
+ "bytes",
+ "dotenv",
+ "env_logger",
+ "futures",
+ "json",
+ "listenfd",
+ "log",
+ "mime",
+ "rand",
+ "serde",
+ "serde_json",
+ "sled",
+]
+
+[[package]]
 name = "derive_more"
 version = "0.99.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -919,28 +941,6 @@ dependencies = [
  "widestring",
  "winapi 0.3.8",
  "winreg",
-]
-
-[[package]]
-name = "iterum-fs"
-version = "0.1.0"
-dependencies = [
- "actix-multipart",
- "actix-rt",
- "actix-web",
- "async-std",
- "bytes",
- "dotenv",
- "env_logger",
- "futures",
- "json",
- "listenfd",
- "log",
- "mime",
- "rand",
- "serde",
- "serde_json",
- "sled",
 ]
 
 [[package]]

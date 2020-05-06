@@ -9,7 +9,7 @@
 DELETE {{address}}/{{dataset_path}} HTTP/1.1
 
 ### Get pipeline
-GET {{address}}/{{dataset_path}}/pipeline_result/pipelinehash HTTP/1.1
+GET {{address}}/{{dataset_path}}/pipeline_result/7 HTTP/1.1
 
 
 ### Create pipeline result

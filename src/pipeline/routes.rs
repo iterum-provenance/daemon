@@ -35,12 +35,12 @@ async fn create_pipeline_result(
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
 
-    vc_dataset = vc_dataset.add_pipeline_result(&pipeline)?;
-    vc_dataset
-        .dataset
-        .backend
-        .save_vcdataset(&dataset_path, &vc_dataset)?;
-    config.cache.insert(&dataset_path, &vc_dataset)?;
+    // vc_dataset = vc_dataset.add_pipeline_result(&pipeline)?;
+    // vc_dataset
+    //     .dataset
+    //     .backend
+    //     .save_vcdataset(&dataset_path, &vc_dataset)?;
+    // config.cache.insert(&dataset_path, &vc_dataset)?;
     Ok(HttpResponse::Ok().json(&pipeline))
 }
 
@@ -59,10 +59,12 @@ async fn get_pipeline_result(
         .get(&dataset_path)?
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
+
     let pipeline_result = vc_dataset
-        .pipeline_results
-        .get(&pipeline_hash)
-        .ok_or_else(|| DaemonError::NotFound)?;
+        .dataset
+        .backend
+        .get_pipeline_results(&dataset_path, &pipeline_hash)?;
+
     Ok(HttpResponse::Ok().json(pipeline_result))
 }
 
@@ -78,10 +80,13 @@ async fn add_result(
         pipeline_hash, dataset_path
     );
 
-    let mut vc_dataset: VCDataset = config
+    let vc_dataset: VCDataset = config
         .cache
         .get(&dataset_path)?
-        .ok_or_else(|| DaemonError::NotFound)?
+        .ok_or_else(|| {
+            error!("Could not find dataset..");
+            DaemonError::NotFound
+        })?
         .into();
 
     // iterate over multipart stream
@@ -89,7 +94,7 @@ async fn add_result(
     let temp_path = format!("./.tmp/{}/", utils::create_random_hash());
     fs::create_dir_all(&temp_path).expect("Could not create temporary file directory.");
 
-    let mut file_list = Vec::new();
+    let mut file_list: Vec<(String, String)> = Vec::new();
 
     while let Some(item) = payload.next().await {
         let mut field = item?;
@@ -102,10 +107,11 @@ async fn add_result(
 
         let filepath = format!("{}{}", &temp_path, &filename);
         debug!("Saving file to {}", filepath);
-        let parent_path = std::path::Path::new(&filepath).parent().unwrap();
-        if !parent_path.exists() {
-            fs::create_dir_all(&parent_path).expect("Could not create temporary file directory.");
-        }
+        debug!("Filename: {}", filename);
+        // let parent_path = std::path::Path::new(&filepath).parent().unwrap();
+        // if !parent_path.exists() {
+        //     fs::create_dir_all(&parent_path).expect("Could not create temporary file directory.");
+        // }
 
         let mut f = async_std::fs::File::create(&filepath).await?;
         // Field in turn is stream of *Bytes* object
@@ -113,52 +119,17 @@ async fn add_result(
             let data = chunk.unwrap();
             f.write_all(&data).await?;
         }
-        file_list.push(filepath);
+        file_list.push((filename.to_string(), filepath));
     }
     debug!("Time to upload file \t{}ms", now.elapsed().as_millis());
-
-    // Done uploading. Now parse the commit
-
-    // Check whether a branch file is present
-    // let temp_branch_file = format!("{}/branch.json", temp_path);
-    // if std::path::Path::new(&temp_branch_file).exists() {
-    //     // Create the branch
-    //     let branch_string: String = fs::read_to_string(temp_branch_file)?;
-    //     let branch: Branch = serde_json::from_str(&branch_string)?;
-    //     debug!("Creating branch with hash: {}", branch.hash);
-
-    //     // Add branch to dataset.
-    //     vc_dataset = vc_dataset.add_branch(&branch)?;
-    // };
-    let mut pipeline_result = vc_dataset
-        .pipeline_results
-        .get(&pipeline_hash)
-        .ok_or_else(|| DaemonError::NotFound)?
-        .clone();
-
-    pipeline_result.files.extend(file_list);
-    // Create commit
-    // let temp_commit_file = format!("{}/commit", temp_path);
-    // let commit_string: String = fs::read_to_string(temp_commit_file)?;
-    // let commit: Commit = serde_json::from_str(&commit_string)?;
-
-    // Add commit to the dataset
-
-    vc_dataset = vc_dataset.set_pipeline_result(&pipeline_result)?;
 
     // Now move the files to the backend
     vc_dataset.dataset.backend.store_pipeline_result_files(
         &vc_dataset.dataset,
-        &pipeline_result,
+        &file_list,
+        &pipeline_hash,
         &temp_path.to_string(),
     )?;
-
-    // Store changes to dataset to backend and caches.
-    vc_dataset
-        .dataset
-        .backend
-        .save_vcdataset(&dataset_path, &vc_dataset)?;
-    config.cache.insert(dataset_path.to_string(), &vc_dataset)?;
 
     std::fs::remove_dir_all(&temp_path)?;
 
@@ -168,4 +139,5 @@ async fn add_result(
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create_pipeline_result);
     cfg.service(get_pipeline_result);
+    cfg.service(add_result);
 }

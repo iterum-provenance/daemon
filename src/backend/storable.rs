@@ -26,7 +26,13 @@ pub trait Storable {
     fn store_pipeline_result_files(
         &self,
         dataset: &Dataset,
-        pipeline_result: &PipelineResult,
+        pipeline_result_paths: &[(String, String)],
+        pipeline_hash: &str,
         tmp_files_path: &str,
     ) -> Result<(), std::io::Error>;
+    fn get_pipeline_results(
+        &self,
+        dataset_path: &str,
+        pipeline_hash: &str,
+    ) -> Result<Vec<String>, DaemonError>;
 }

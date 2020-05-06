@@ -66,13 +66,28 @@ impl Storable for Backend {
     fn store_pipeline_result_files(
         &self,
         dataset: &Dataset,
-        pipeline_result: &PipelineResult,
+        pipeline_result_paths: &[(String, String)],
+        pipeline_hash: &str,
         tmp_files_path: &str,
     ) -> Result<(), std::io::Error> {
         match self {
-            Backend::Local(backend) => {
-                backend.store_pipeline_result_files(dataset, pipeline_result, tmp_files_path)
-            }
+            Backend::Local(backend) => backend.store_pipeline_result_files(
+                dataset,
+                pipeline_result_paths,
+                pipeline_hash,
+                tmp_files_path,
+            ),
+            _ => unimplemented!(),
+        }
+    }
+
+    fn get_pipeline_results(
+        &self,
+        dataset_path: &str,
+        pipeline_hash: &str,
+    ) -> Result<Vec<String>, DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.get_pipeline_results(dataset_path, pipeline_hash),
             _ => unimplemented!(),
         }
     }
