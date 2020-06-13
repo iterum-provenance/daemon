@@ -2,18 +2,8 @@ use crate::config;
 use crate::dataset::{Branch, DatasetConfig};
 use crate::version_control;
 
-use actix_web::{get, post, web, HttpResponse};
-
-use crate::backend::storable::Storable;
 use crate::error::DaemonError;
-use async_std::prelude::*;
-
-
-
-
-
-
-
+use actix_web::{get, post, web, HttpResponse};
 
 use version_control::dataset::VCDataset;
 use version_control::error::VersionControlError;
@@ -47,7 +37,7 @@ async fn create_branch(
     {
         let mut datasets_ref = config.datasets.write().unwrap();
         dataset_config.save_vcdataset(&vc_dataset)?;
-        datasets_ref.insert(dataset_path.to_string(), vc_dataset);
+        datasets_ref.insert(dataset_path, vc_dataset);
     }
 
     Ok(HttpResponse::Ok().json(&branch))

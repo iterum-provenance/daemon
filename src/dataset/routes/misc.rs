@@ -1,22 +1,10 @@
 use crate::config;
-use crate::dataset::{DatasetConfig};
-use crate::version_control;
-
-use actix_web::{get, post, web, HttpResponse};
-
-use crate::backend::storable::Storable;
+use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
-use async_std::prelude::*;
-use futures::StreamExt;
-
-
-
+use actix_web::{get, post, web, HttpResponse};
 use std::ffi::OsStr;
-
 use std::path::Path;
 use std::time::Instant;
-
-
 
 #[get("/{dataset}/file/{file}/{commit}")]
 async fn get_file(

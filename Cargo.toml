@@ -12,24 +12,17 @@ name = "daemon"
 path = "src/main.rs"
 
 [dependencies]
-openssl = { version = "0.10", features = ["vendored"] }
 async-std = "1.4.0"
 log = "0.4.0"
 env_logger = "0.7.1"
 dotenv = "0.15.0"
 
-bytes = "0.5.4"
-zerocopy = "0.3.0"
-
-
-actix = "0.9.0"
 actix-web = "2.0.0"
 actix-rt = "1.0.0"
 actix-multipart = "0.2.0"
 listenfd = "0.3"
 mime = "0.3.16"
 
-json = "*"
 serde = "1.0.1"
 serde_json = "1.0"
 
