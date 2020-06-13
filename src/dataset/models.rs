@@ -105,7 +105,7 @@ impl DatasetConfig {
 
     pub fn store_pipeline_result_files(
         &self,
-        dataset: &DatasetConfig,
+        _dataset: &DatasetConfig,
         pipeline_result_paths: &[(String, String)],
         pipeline_hash: &str,
         tmp_files_path: &str,

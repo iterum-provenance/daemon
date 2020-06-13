@@ -45,9 +45,7 @@ impl VCDataset {
 
         // Update the parent in the Vtree
         parent_node.children.push(commit.hash.to_string());
-        self.version_tree
-            .tree
-            .insert(parent_hash.to_string(), parent_node);
+        self.version_tree.tree.insert(parent_hash.to_string(), parent_node);
 
         // Create a new Vtree node, and add to the tree.
         let vtree_node = VersionTreeNode {
@@ -56,13 +54,10 @@ impl VCDataset {
             children: vec![],
             parent: Some(parent_hash.to_string()),
         };
-        self.version_tree
-            .tree
-            .insert(commit.hash.to_string(), vtree_node);
+        self.version_tree.tree.insert(commit.hash.to_string(), vtree_node);
 
         // Insert commit in commit map
-        self.commits
-            .insert(commit.hash.to_string(), (*commit).clone());
+        self.commits.insert(commit.hash.to_string(), (*commit).clone());
 
         Ok(self)
     }
@@ -73,7 +68,7 @@ mod tests {
     use super::*;
     use crate::dataset::models::{Deprecated, Diff};
     use crate::tests::create_new_dataset;
-    use crate::utils::create_random_hash;
+    use iterum_rust::utils::create_random_hash;
 
     fn create_dummy_commit(dataset: &VCDataset) -> Commit {
         let branch_hash = dataset.branches.iter().next().unwrap().0;

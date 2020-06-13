@@ -1,4 +1,4 @@
-use crate::dataset::DatasetConfig;
+
 use crate::version_control::dataset::VCDataset;
 use sled::Db;
 use std::collections::HashMap;

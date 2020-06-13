@@ -1,4 +1,4 @@
-use crate::dataset::models::{Branch, Commit, DatasetConfig, Deprecated, Diff, VersionTree, VersionTreeNode};
+use crate::dataset::models::{Branch, Commit, Deprecated, Diff, VersionTree, VersionTreeNode};
 // use crate::pipeline::models::PipelineResult;
 use iterum_rust::utils::create_random_hash;
 use serde::{Deserialize, Serialize};

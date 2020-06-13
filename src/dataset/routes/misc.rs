@@ -1,22 +1,22 @@
 use crate::config;
-use crate::dataset::{Branch, Commit, DatasetConfig};
+use crate::dataset::{DatasetConfig};
 use crate::version_control;
-use actix_multipart::Multipart;
-use actix_web::{delete, get, post, web, HttpResponse};
+
+use actix_web::{get, post, web, HttpResponse};
 
 use crate::backend::storable::Storable;
 use crate::error::DaemonError;
 use async_std::prelude::*;
 use futures::StreamExt;
-use iterum_rust::utils;
-use serde_json::json;
-use std::collections::HashMap;
+
+
+
 use std::ffi::OsStr;
-use std::fs;
+
 use std::path::Path;
 use std::time::Instant;
-use version_control::dataset::VCDataset;
-use version_control::error::VersionControlError;
+
+
 
 #[get("/{dataset}/file/{file}/{commit}")]
 async fn get_file(
