@@ -28,7 +28,7 @@ impl VCDataset {
 mod tests {
     use super::*;
     // use crate::tests::create_new_dataset;
-    use crate::utils::create_random_hash;
+    use iterum_rust::utils::create_random_hash;
 
     fn _create_dummy_branch(dataset: &VCDataset) -> Branch {
         let branch_hash = dataset.branches.iter().next().unwrap().0;

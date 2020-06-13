@@ -1,5 +1,5 @@
-@address = http://localhost:3000
-@dataset_path = test_dataset
+@address = http://localhost:2999
+@dataset_path = ego-photos-all
 @initial_commit_hash = initial_commit
 @commit_hash = 4
 @branch_hash = initial_branch
@@ -16,10 +16,10 @@ POST {{address}}/ HTTP/1.1
 content-type: application/json
 
 {
-  "name": "{{dataset_path}}",
+  "name": "test_dataset4",
   "backend": "Local",
   "credentials": {
-      "path": "/localStorage/"
+      "path": "storage/"
   },
   "description": "This dataset contains test images!"
 }
@@ -27,8 +27,11 @@ content-type: application/json
 ### Get version tree
 GET {{address}}/{{dataset_path}}/vtree HTTP/1.1
 
+### Get pipelines
+GET {{address}}/{{dataset_path}}/pipelines HTTP/1.1
+
 ### Get a commit
-GET {{address}}/{{dataset_path}}/commit/76PV4wMY0YBHEwkguNDvMCSkWupbULAe HTTP/1.1
+GET {{address}}/{{dataset_path}}/commit/9cbrW9qZapEnSxcYU1ykY3tOk1r5tzCO HTTP/1.1
 
 ### Create new branch
 POST {{address}}/{{dataset_path}}/branch HTTP/1.1
@@ -134,8 +137,14 @@ Content-Type: application/octet-stream
 
 
 ### Get a file
-GET {{address}}/{{dataset_path}}/file/{{commit_hash}}/{{file}} HTTP/1.1
+GET {{address}}/{{dataset_path}}/file/config.json/xciy9aes36Y8OjrfMDLEi37uQwCM34Zx HTTP/1.1
 
 ### Reset state
 POST {{address}}/reset_state HTTP/1.1
 
+
+### read state
+GET {{address}}/rwlock/read HTTP/1.1
+
+### write state
+GET {{address}}/rwlock/write HTTP/1.1

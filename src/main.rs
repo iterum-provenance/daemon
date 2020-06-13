@@ -4,19 +4,23 @@ use actix_web::{web, HttpResponse};
 use actix_web::{App, HttpServer};
 use dotenv::dotenv;
 use listenfd::ListenFd;
-use sled;
 use std::env;
 
 mod backend;
+// mod cache;
 pub mod config;
 mod dataset;
+// mod dataset_manager;
 mod error;
-mod pipeline;
-mod utils;
+// mod pipeline;
 mod version_control;
 
 #[cfg(test)]
 mod tests;
+use crate::dataset::DatasetConfig;
+use crate::version_control::dataset::VCDataset;
+use std::collections::HashMap;
+use std::sync::RwLock;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -25,10 +29,27 @@ async fn main() -> std::io::Result<()> {
 
     let mut listenfd = ListenFd::from_env();
 
-    let cache_path = env::var("CACHE_PATH").expect("Cache path not set");
-    let t = sled::open(&cache_path).expect("Creation of cache db failed..");
+    let local_config_path = env::var("LOCAL_CONFIG_PATH").expect("Local config path not set");
+    let t = sled::open(&local_config_path).expect("Creation of local config db failed..");
 
-    let config = web::Data::new(config::Config { cache: t });
+    // let dataset_configs: HashMap<String, DatasetConfig> = HashMap::new();
+    let mut datasets: HashMap<String, VCDataset> = HashMap::new();
+    let len = &t.into_iter().count();
+    info!("There are {} elements in the local cache.", len);
+    t.into_iter().for_each(|x| {
+        let (key, value) = x.unwrap();
+        info!("Loading element into cache. {:?}", std::str::from_utf8(&key).unwrap());
+        let dataset_config: DatasetConfig = value.into();
+
+        let dataset = dataset_config.read_vcdataset().unwrap();
+        datasets.insert(dataset_config.name, dataset);
+    });
+
+    let config = web::Data::new(config::Config {
+        local_config: t,
+        // dataset_configs: RwLock::new(dataset_configs),
+        datasets: RwLock::new(datasets),
+    });
 
     let mut server = HttpServer::new(move || {
         App::new()
@@ -36,14 +57,10 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {
                 let message = format!("Error when handling JSON: {:?}", err);
                 error!("{}", message);
-                actix_web::error::InternalError::from_response(
-                    err,
-                    HttpResponse::Conflict().body(message),
-                )
-                .into()
+                actix_web::error::InternalError::from_response(err, HttpResponse::Conflict().body(message)).into()
             }))
             .configure(dataset::init_routes)
-            .configure(pipeline::init_routes)
+        // .configure(pipeline::init_routes)
     });
 
     server = match listenfd.take_tcp_listener(0)? {

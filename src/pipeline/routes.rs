@@ -6,18 +6,12 @@ use actix_multipart::Multipart;
 use actix_web::{get, post, web, HttpResponse};
 
 use crate::error::DaemonError;
-use crate::utils;
 use async_std::prelude::*;
 use futures::StreamExt;
-use serde_json;
-use serde_json::json;
-use std::collections::HashMap;
-use std::ffi::OsStr;
+use iterum_rust::utils;
 use std::fs;
-use std::path::Path;
 use std::time::Instant;
 use version_control::dataset::VCDataset;
-use version_control::error::VersionControlError;
 
 #[post("/{dataset}/pipeline_result")]
 async fn create_pipeline_result(
@@ -29,7 +23,7 @@ async fn create_pipeline_result(
     let dataset_path = path.to_string();
     let pipeline = pipeline.into_inner();
 
-    let mut vc_dataset: VCDataset = config
+    let _vc_dataset: VCDataset = config
         .cache
         .get(&dataset_path)?
         .ok_or_else(|| DaemonError::NotFound)?
@@ -43,6 +37,31 @@ async fn create_pipeline_result(
     // config.cache.insert(&dataset_path, &vc_dataset)?;
     Ok(HttpResponse::Ok().json(&pipeline))
 }
+
+// #[get("/{dataset}/pipelines")]
+// async fn get_pipelines_for_dataset(
+//     config: web::Data<config::Config>,
+//     path: web::Path<String>,
+// ) -> Result<HttpResponse, DaemonError> {
+//     let dataset_path = path.into_inner();
+//     info!(
+//         "Getting pipelines for dataset {}
+//     ",
+//         dataset_path
+//     );
+//     let vc_dataset: VCDataset = config
+//         .cache
+//         .get(&dataset_path)?
+//         .ok_or_else(|| DaemonError::NotFound)?
+//         .into();
+
+//     // let pipeline_result = vc_dataset
+//     //     .dataset
+//     //     .backend
+//     //     .get_pipeline_results(&dataset_path, &pipeline_hash)?;
+
+//     Ok(HttpResponse::Ok().json(pipeline_result))
+// }
 
 #[get("/{dataset}/pipeline_result/{pipeline_hash}")]
 async fn get_pipeline_result(

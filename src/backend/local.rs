@@ -1,7 +1,6 @@
 use super::storable::Storable;
-use crate::dataset::{Commit, Dataset};
+use crate::dataset::{Commit, DatasetConfig};
 use crate::error::DaemonError;
-use crate::pipeline::models::PipelineResult;
 use crate::version_control::dataset::VCDataset;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -16,7 +15,7 @@ pub struct Local {
 impl Storable for Local {
     fn store_committed_files(
         &self,
-        dataset: &Dataset,
+        dataset: &DatasetConfig,
         commit: &Commit,
         tmp_files_path: String,
     ) -> Result<(), std::io::Error> {
@@ -32,8 +31,7 @@ impl Storable for Local {
             // fs::create_dir_all(&file_dir).expect("Could not create data file directory.");
             let file_folder_path = std::path::Path::new(&file_dir).parent().unwrap();
             if !file_folder_path.exists() {
-                fs::create_dir_all(&file_folder_path)
-                    .expect("Could not create temporary file directory.");
+                fs::create_dir_all(&file_folder_path).expect("Could not create temporary file directory.");
             }
             debug!("Storing file in: {}", file_dir);
             fs::copy(&tmp_file_path, &file_dir)?;
@@ -50,16 +48,8 @@ impl Storable for Local {
         Ok(())
     }
 
-    fn get_file(
-        &self,
-        dataset_path: &str,
-        commit_hash: &str,
-        filename: &str,
-    ) -> Result<Vec<u8>, DaemonError> {
-        let file_path = format!(
-            "{}{}/data/{}/{}",
-            self.path, dataset_path, filename, commit_hash
-        );
+    fn get_file(&self, dataset_path: &str, commit_hash: &str, filename: &str) -> Result<Vec<u8>, DaemonError> {
+        let file_path = format!("{}{}/data/{}/{}", self.path, dataset_path, filename, commit_hash);
         match fs::read(&file_path) {
             Ok(contents) => Ok(contents),
             Err(error) => match error.kind() {
@@ -104,10 +94,10 @@ impl Storable for Local {
 
     fn store_pipeline_result_files(
         &self,
-        dataset: &Dataset,
+        dataset: &DatasetConfig,
         pipeline_result_paths: &[(String, String)],
         pipeline_hash: &str,
-        tmp_files_path: &str,
+        _tmp_files_path: &str,
     ) -> Result<(), std::io::Error> {
         debug!("Adding files with names:");
         for file in pipeline_result_paths {
@@ -118,8 +108,7 @@ impl Storable for Local {
             let file_folder_path = std::path::Path::new(&file_dir);
             debug!("Dir path: {:?}", file_folder_path);
             if !file_folder_path.exists() {
-                fs::create_dir_all(&file_folder_path)
-                    .expect("Could not create temporary file directory.");
+                fs::create_dir_all(&file_folder_path).expect("Could not create temporary file directory.");
             }
             let new_filepath = format!("{}/{}", file_dir, filename);
             debug!("Storing file in: {}", new_filepath);
@@ -129,11 +118,7 @@ impl Storable for Local {
         Ok(())
     }
 
-    fn get_pipeline_results(
-        &self,
-        dataset_path: &str,
-        pipeline_hash: &str,
-    ) -> Result<Vec<String>, DaemonError> {
+    fn get_pipeline_results(&self, dataset_path: &str, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
         let path = format!("{}{}/runs/{}", self.path, dataset_path, pipeline_hash);
         let files: Vec<String> = fs::read_dir(path)?
             .map(|direntry| direntry.unwrap().path().to_str().unwrap().into())

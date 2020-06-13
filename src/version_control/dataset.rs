@@ -1,33 +1,31 @@
-use crate::dataset::models::{
-    Branch, Commit, Dataset, Deprecated, Diff, VersionTree, VersionTreeNode,
-};
+use crate::dataset::models::{Branch, Commit, DatasetConfig, Deprecated, Diff, VersionTree, VersionTreeNode};
 // use crate::pipeline::models::PipelineResult;
-use crate::utils::create_random_hash;
+use iterum_rust::utils::create_random_hash;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VCDataset {
-    pub dataset: Dataset,
+    // pub dataset: Dataset,
     pub commits: HashMap<String, Commit>,
     pub branches: HashMap<String, Branch>,
     pub version_tree: VersionTree,
 }
 
-impl From<&VCDataset> for sled::IVec {
-    fn from(dataset: &VCDataset) -> sled::IVec {
-        debug!("Serializing struct {:?}", dataset);
-        let string = serde_json::to_string(&dataset).expect("Serializing failed");
-        string.into_bytes().into()
-    }
-}
+// impl From<&VCDataset> for sled::IVec {
+//     fn from(dataset: &VCDataset) -> sled::IVec {
+//         debug!("Serializing struct {:?}", dataset);
+//         let string = serde_json::to_string(&dataset).expect("Serializing failed");
+//         string.into_bytes().into()
+//     }
+// }
 
-impl From<sled::IVec> for VCDataset {
-    fn from(ivec: sled::IVec) -> VCDataset {
-        let string = String::from_utf8(ivec.to_vec()).expect("Converting bytes to string failed.");
-        serde_json::from_str(&string).expect("Deserializing dataset failed")
-    }
-}
+// impl From<sled::IVec> for VCDataset {
+//     fn from(ivec: sled::IVec) -> VCDataset {
+//         let string = String::from_utf8(ivec.to_vec()).expect("Converting bytes to string failed.");
+//         serde_json::from_str(&string).expect("Deserializing dataset failed")
+//     }
+// }
 
 // Dataset struct waar alle json files in zitten wat je ook op de disc opslaat.
 // Dan kan je makkelijker integrity checks doen.
@@ -42,7 +40,7 @@ impl From<sled::IVec> for VCDataset {
 // Vervolgens kan de caller de nieuwe dataset opslaan.
 
 impl VCDataset {
-    pub fn new(dataset: &Dataset) -> VCDataset {
+    pub fn new() -> VCDataset {
         let mut tree: HashMap<String, VersionTreeNode> = HashMap::new();
         let root_commit_hash = create_random_hash();
         let master_branch_hash = create_random_hash();
@@ -86,7 +84,6 @@ impl VCDataset {
         branch_map.insert(master_branch_hash, master_branch);
 
         VCDataset {
-            dataset: dataset.clone(),
             commits: commit_map,
             branches: branch_map,
             version_tree,

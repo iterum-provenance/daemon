@@ -7,4 +7,5 @@
 .vscode
 .database.sqlite
 .cache
+.local_config
 .tmp
