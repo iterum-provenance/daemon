@@ -12,13 +12,12 @@ pub mod config;
 mod dataset;
 // mod dataset_manager;
 mod error;
-// mod pipeline;
-mod version_control;
+mod pipeline;
 
 #[cfg(test)]
 mod tests;
 use crate::dataset::DatasetConfig;
-use crate::version_control::dataset::VCDataset;
+use iterum_rust::vc::Dataset;
 use std::collections::HashMap;
 use std::sync::RwLock;
 
@@ -29,11 +28,11 @@ async fn main() -> std::io::Result<()> {
 
     let mut listenfd = ListenFd::from_env();
 
-    let local_config_path = env::var("LOCAL_CONFIG_PATH").expect("Local config path not set");
+    let local_config_path = env::var("LOCAL_CONFIG_PATH").expect("LOCAL_CONFIG_PATH not set");
     let t = sled::open(&local_config_path).expect("Creation of local config db failed..");
 
     // let dataset_configs: HashMap<String, DatasetConfig> = HashMap::new();
-    let mut datasets: HashMap<String, VCDataset> = HashMap::new();
+    let mut datasets: HashMap<String, Dataset> = HashMap::new();
     let len = &t.into_iter().count();
     info!("There are {} elements in the local cache.", len);
     t.into_iter().for_each(|x| {
@@ -41,7 +40,7 @@ async fn main() -> std::io::Result<()> {
         info!("Loading element into cache. {:?}", std::str::from_utf8(&key).unwrap());
         let dataset_config: DatasetConfig = value.into();
 
-        let dataset = dataset_config.read_vcdataset().unwrap();
+        let dataset = dataset_config.read_dataset().unwrap();
         datasets.insert(dataset_config.name, dataset);
     });
 
@@ -60,14 +59,14 @@ async fn main() -> std::io::Result<()> {
                 actix_web::error::InternalError::from_response(err, HttpResponse::Conflict().body(message)).into()
             }))
             .configure(dataset::init_routes)
-        // .configure(pipeline::init_routes)
+            .configure(pipeline::init_routes)
     });
 
     server = match listenfd.take_tcp_listener(0)? {
         Some(listener) => server.listen(listener)?,
         None => {
-            let host = env::var("HOST").expect("Host not set");
-            let port = env::var("PORT").expect("Port not set");
+            let host = env::var("HOST").expect("HOST not set");
+            let port = env::var("PORT").expect("PORT not set");
             server.bind(format!("{}:{}", host, port))?
         }
     };

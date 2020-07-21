@@ -1,7 +1,5 @@
+use iterum_rust::vc::Dataset;
 
-
-use crate::version_control::dataset::VCDataset;
-
-pub fn create_new_dataset() -> VCDataset {
-    VCDataset::new()
+pub fn create_new_dataset() -> Dataset {
+    Dataset::new()
 }

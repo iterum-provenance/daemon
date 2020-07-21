@@ -1,0 +1,240 @@
+@address = http://localhost:3000
+@dataset_path = cats-data
+@initial_commit_hash = initial_commit
+@commit_hash = 4
+@branch_hash = initial_branch
+@file = cat.1.jpg
+
+### Delete dataset
+DELETE {{address}}/{{dataset_path}} HTTP/1.1
+
+### Get dataset
+GET {{address}}/{{dataset_path}} HTTP/1.1
+
+
+### Get dataset
+GET http://localhost:3000/ HTTP/1.1
+
+
+### Get pipeline executions
+GET {{address}}/{{dataset_path}}/runs HTTP/1.1
+
+
+### Get pipeline executions
+GET {{address}}/{{dataset_path}}/runs/a HTTP/1.1
+
+### Create new pipeline execution
+POST {{address}}/{{dataset_path}}/runs HTTP/1.1
+content-type: application/json
+
+{
+  "pipeline_run": {
+    "pipeline_run_hash": "a",
+    "name": "cats-demo",
+    "input_dataset": "ego-photos-all",
+    "input_dataset_commit_hash": "S3FbuOh6XMM8D51JWfSOtgye1fDeDBs1",
+    "fragmenter": {
+      "image": "iterum/egocentric-fragmenter:latest",
+      "output_channel": "fragmenter_output",
+      "config": {
+        "config_files": {
+          "CONFIG": "config.json"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "labeler",
+        "image": "iterum/egocentric-labeler:latest",
+        "instance_count": 3,
+        "prefetch_count": 50,
+        "input_channel": "fragmenter_output",
+        "output_channel": "labeler_output",
+        "config": {
+          "alpha": 0.5
+        }
+      },
+      {
+        "name": "timeslot-aggregation",
+        "image": "iterum/egocentric-timeslot-aggregator:latest",
+        "input_channel": "labeler_output",
+        "output_channel": "aggregate_timeslot_output"
+      },
+      {
+        "name": "topics",
+        "image": "iterum/egocentric-topic-discoverer:latest",
+        "input_channel": "aggregate_timeslot_output",
+        "output_channel": "topics_output",
+        "config": {
+          "random_seed": 42
+        }
+      },
+      {
+        "name": "routine-discovery",
+        "image": "iterum/egocentric-routine-discoverer:latest",
+        "input_channel": "topics_output",
+        "output_channel": "routine_discovery_output"
+      },
+      {
+        "name": "evaluation",
+        "image": "iterum/egocentric-evaluator:latest",
+        "input_channel": "routine_discovery_output",
+        "output_channel": "evaluation_output"
+      }
+    ],
+    "combiner": {
+      "input_channel": "evaluation_output"
+    },
+    "config": {
+      "time_slots": [
+        "0-7",
+        "7-9",
+        "9-11",
+        "11-13",
+        "13-15",
+        "15-17",
+        "17-19",
+        "19-21",
+        "21-24"
+      ],
+      "topic_count": 6
+    }
+  },
+  "status": {
+    "1": "Succeeded"
+  },
+  "results": null
+}
+
+
+# #[derive(Serialize, Deserialize)]
+# pub struct PipelineExecution {
+#     pub pipeline_run: PipelineRun,
+#     pub status: HashMap<String, StepStatus>,
+#     pub results: Option<Vec<String>>,
+# }
+
+### Get version tree
+GET {{address}}/{{dataset_path}}/vtree HTTP/1.1
+
+### Get pipelines
+GET {{address}}/{{dataset_path}}/pipelines HTTP/1.1
+
+### Get a commit
+GET {{address}}/{{dataset_path}}/commit/9cbrW9qZapEnSxcYU1ykY3tOk1r5tzCO HTTP/1.1
+
+### Create new branch
+POST {{address}}/{{dataset_path}}/branch HTTP/1.1
+content-type: application/json
+
+{
+  "hash": "created_branch",
+  "name": "CreatedBranch",
+  "head": "mkQaqy7kM4ILbBmlSQECAmpK1xMk9fPS"
+}
+
+### Get a list of datasets
+GET {{address}}/ HTTP/1.1
+
+
+### Get a branch
+GET {{address}}/{{dataset_path}}/branch/gGpK3w1mZyTaTC67v2ucd4MxrhMXg1Et HTTP/1.1
+
+### Add a commit
+POST {{address}}/{{dataset_path}}/commit
+Content-Type: multipart/form-data; boundary=MyBoundary
+Accept: application/json
+
+preamble which should be ignored...
+--MyBoundary
+Content-Disposition: form-data; name="commit.json"; filename="commit"
+Content-Type: application/json
+
+< data/commit.json
+
+--MyBoundary
+Content-Disposition: form-data; name="cat.1.jpg"; filename="cat.1.jpg/4"
+Content-Type: image/jpeg
+
+< data/train/cats/cat.1.jpg
+
+--MyBoundary
+Content-Disposition: form-data; name="cat.2.jpg"; filename="cat.2.jpg/4"
+Content-Type: image/jpeg
+
+< data/train/cats/cat.2.jpg
+
+--MyBoundary--
+
+
+### Add a commit with branch
+POST {{address}}/{{dataset_path}}/commit
+Content-Type: multipart/form-data; boundary=MyBoundary
+Accept: application/json
+
+preamble which should be ignored...
+--MyBoundary
+Content-Disposition: form-data; name="branch.json"; filename="branch"
+Content-Type: application/json
+
+< data/branch.json
+--MyBoundary
+Content-Disposition: form-data; name="commit.json"; filename="commit"
+Content-Type: application/json
+
+< data/commit.json
+
+--MyBoundary
+Content-Disposition: form-data; name="cat.1.jpg"; filename="cat.1.jpg/4"
+Content-Type: image/jpeg
+
+< data/train/cats/cat.1.jpg
+
+--MyBoundary
+Content-Disposition: form-data; name="cat.2.jpg"; filename="cat.2.jpg/4"
+Content-Type: image/jpeg
+
+< data/train/cats/cat.2.jpg
+
+--MyBoundary--
+
+
+### Add a commit octed stream
+POST {{address}}/{{dataset_path}}/commit
+Content-Type: multipart/form-data; boundary=MyBoundary
+Accept: application/json
+
+preamble which should be ignored...
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="commit.json"
+Content-Type: application/octet-stream
+
+< data/commit.json
+
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="cat.1.jpg/4"
+Content-Type: application/octet-stream
+
+< data/train/cats/cat.1.jpg
+
+--MyBoundary
+Content-Disposition: form-data; name="file"; filename="cat.2.jpg/4"
+Content-Type: application/octet-stream
+
+< data/train/cats/cat.2.jpg
+
+--MyBoundary--
+
+
+### Get a file
+GET {{address}}/{{dataset_path}}/file/config.json/xciy9aes36Y8OjrfMDLEi37uQwCM34Zx HTTP/1.1
+
+### Reset state
+POST {{address}}/reset_state HTTP/1.1
+
+
+### read state
+GET {{address}}/rwlock/read HTTP/1.1
+
+### write state
+GET {{address}}/rwlock/write HTTP/1.1

@@ -54,7 +54,7 @@ pub async fn reset_state(config: web::Data<config::Config>) -> Result<HttpRespon
     config.local_config.iter().for_each(|kv| {
         let (ivec_name, ivec_dataset) = kv.unwrap();
         let dataset_config: DatasetConfig = ivec_dataset.into();
-        dataset_config.remove_vcdataset().unwrap();
+        dataset_config.remove_dataset().unwrap();
         let name: String = String::from_utf8(ivec_name.to_vec()).expect("Converting bytes to string failed.");
         datasets_ref.remove(&name);
     });

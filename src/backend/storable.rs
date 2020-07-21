@@ -1,7 +1,7 @@
-use crate::dataset::{Commit, DatasetConfig};
+use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
 // use crate::pipeline::models::PipelineResult;
-use crate::version_control::dataset::VCDataset;
+use iterum_rust::vc::{Commit, Dataset};
 
 pub trait Storable {
     /// Trait for backends which is used to store the types to the backend.
@@ -14,9 +14,9 @@ pub trait Storable {
         tmp_files_path: String,
     ) -> Result<(), std::io::Error>;
     fn get_file(&self, dataset_path: &str, commit_hash: &str, filename: &str) -> Result<Vec<u8>, DaemonError>;
-    fn save_vcdataset(&self, dataset_path: &str, dataset: &VCDataset) -> Result<(), DaemonError>;
-    fn read_vcdataset(&self, dataset_path: &str) -> Result<VCDataset, DaemonError>;
-    fn remove_vcdataset(&self, dataset_path: &str) -> Result<(), DaemonError>;
+    fn save_dataset(&self, dataset_path: &str, dataset: &Dataset) -> Result<(), DaemonError>;
+    fn read_dataset(&self, dataset_path: &str) -> Result<Dataset, DaemonError>;
+    fn remove_dataset(&self, dataset_path: &str) -> Result<(), DaemonError>;
 
     fn store_pipeline_result_files(
         &self,
@@ -26,4 +26,10 @@ pub trait Storable {
         tmp_files_path: &str,
     ) -> Result<(), std::io::Error>;
     fn get_pipeline_results(&self, dataset_path: &str, pipeline_hash: &str) -> Result<Vec<String>, DaemonError>;
+    fn get_pipeline_result(
+        &self,
+        dataset_path: &str,
+        pipeline_hash: &str,
+        file_name: &str,
+    ) -> Result<Vec<u8>, DaemonError>;
 }

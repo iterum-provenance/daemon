@@ -1,11 +1,12 @@
-use crate::dataset::{Commit, DatasetConfig};
+use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
+use iterum_rust::pipeline::PipelineExecution;
 
 // use crate::pipeline::models::PipelineResult;
-use crate::version_control::dataset::VCDataset;
+use iterum_rust::vc::{Commit, Dataset};
 use local::Local;
 use serde::{Deserialize, Serialize};
-use storable::Storable;
+// use storable::Storable;
 
 pub mod local;
 pub mod storable;
@@ -18,8 +19,9 @@ pub enum Backend {
     GoogleCloud,
 }
 
-impl Storable for Backend {
-    fn store_committed_files(
+// Dataset related:
+impl Backend {
+    pub fn store_committed_files(
         &self,
         dataset: &DatasetConfig,
         commit: &Commit,
@@ -30,35 +32,73 @@ impl Storable for Backend {
             _ => panic!("Backend not implemented!"),
         }
     }
-
-    fn get_file(&self, dataset_path: &str, commit_hash: &str, filename: &str) -> Result<Vec<u8>, DaemonError> {
+    pub fn get_file(&self, dataset_path: &str, commit_hash: &str, filename: &str) -> Result<Vec<u8>, DaemonError> {
         match self {
             Backend::Local(backend) => backend.get_file(dataset_path, commit_hash, filename),
             _ => unimplemented!(),
         }
     }
 
-    fn save_vcdataset(&self, dataset_path: &str, dataset: &VCDataset) -> Result<(), DaemonError> {
+    pub fn save_dataset(&self, dataset_path: &str, dataset: &Dataset) -> Result<(), DaemonError> {
         match self {
-            Backend::Local(backend) => backend.save_vcdataset(dataset_path, dataset),
+            Backend::Local(backend) => backend.save_dataset(dataset_path, dataset),
             _ => unimplemented!(),
         }
     }
-    fn read_vcdataset(&self, dataset_path: &str) -> Result<VCDataset, DaemonError> {
+    pub fn read_dataset(&self, dataset_path: &str) -> Result<Dataset, DaemonError> {
         match self {
-            Backend::Local(backend) => backend.read_vcdataset(dataset_path),
-            _ => unimplemented!(),
-        }
-    }
-
-    fn remove_vcdataset(&self, dataset_path: &str) -> Result<(), DaemonError> {
-        match self {
-            Backend::Local(backend) => backend.remove_vcdataset(dataset_path),
+            Backend::Local(backend) => backend.read_dataset(dataset_path),
             _ => unimplemented!(),
         }
     }
 
-    fn store_pipeline_result_files(
+    pub fn remove_dataset(&self, dataset_path: &str) -> Result<(), DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.remove_dataset(dataset_path),
+            _ => unimplemented!(),
+        }
+    }
+}
+
+// Pipeline related:
+impl Backend {
+    pub fn get_pipeline_executions(&self, dataset_path: &str) -> Result<Vec<String>, DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.get_pipeline_executions(dataset_path),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn get_pipeline_execution(
+        &self,
+        dataset_path: &str,
+        pipeline_hash: &str,
+    ) -> Result<PipelineExecution, DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.get_pipeline_execution(dataset_path, pipeline_hash),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn store_pipeline_execution(
+        &self,
+        dataset: &DatasetConfig,
+        pipeline_execution: &PipelineExecution,
+    ) -> Result<(), DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.store_pipeline_execution(dataset, pipeline_execution),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn remove_pipeline_execution(&self, dataset: &DatasetConfig, pipeline_hash: &str) -> Result<(), DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.remove_pipeline_execution(dataset, pipeline_hash),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn store_pipeline_result_files(
         &self,
         dataset: &DatasetConfig,
         pipeline_result_paths: &[(String, String)],
@@ -73,9 +113,20 @@ impl Storable for Backend {
         }
     }
 
-    fn get_pipeline_results(&self, dataset_path: &str, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
+    // pub fn get_pipeline_results(&self, dataset_path: &str, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
+    //     match self {
+    //         Backend::Local(backend) => backend.get_pipeline_results(dataset_path, pipeline_hash),
+    //         _ => unimplemented!(),
+    //     }
+    // }
+    pub fn get_pipeline_result(
+        &self,
+        dataset_path: &str,
+        pipeline_hash: &str,
+        file_name: &str,
+    ) -> Result<Vec<u8>, DaemonError> {
         match self {
-            Backend::Local(backend) => backend.get_pipeline_results(dataset_path, pipeline_hash),
+            Backend::Local(backend) => backend.get_pipeline_result(dataset_path, pipeline_hash, file_name),
             _ => unimplemented!(),
         }
     }

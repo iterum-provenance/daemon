@@ -1,62 +1,8 @@
 use crate::backend::Backend;
 use crate::error::DaemonError;
-use crate::version_control::dataset::VCDataset;
+use iterum_rust::vc::{Commit, Dataset};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum ChangeType {
-    Added,
-    Removed,
-    Updated,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Diff {
-    pub added: Vec<String>,
-    pub removed: Vec<String>,
-    pub updated: Vec<String>, // pub change_type: ChangeType,
-                              // pub files: Vec<String>
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Deprecated {
-    pub value: bool,
-    pub reason: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Commit {
-    pub hash: String,
-    pub parent: Option<String>,
-    pub branch: String,
-    pub name: String,
-    pub description: String,
-    pub files: Vec<String>,
-    pub diff: Diff,
-    pub deprecated: Deprecated,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Branch {
-    pub hash: String,
-    pub name: String,
-    pub head: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct VersionTreeNode {
-    pub name: String,
-    pub branch: String,
-    pub children: Vec<String>,
-    pub parent: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct VersionTree {
-    pub tree: HashMap<String, VersionTreeNode>,
-    pub branches: HashMap<String, String>,
-}
 
 impl From<&DatasetConfig> for sled::IVec {
     fn from(dataset: &DatasetConfig) -> sled::IVec {
@@ -91,21 +37,20 @@ impl DatasetConfig {
         self.backend.get_file(&self.name, commit_hash, filename)
     }
 
-    pub fn save_vcdataset(&self, dataset: &VCDataset) -> Result<(), DaemonError> {
-        self.backend.save_vcdataset(&self.name, dataset)
+    pub fn save_dataset(&self, dataset: &Dataset) -> Result<(), DaemonError> {
+        self.backend.save_dataset(&self.name, dataset)
     }
 
-    pub fn read_vcdataset(&self) -> Result<VCDataset, DaemonError> {
-        self.backend.read_vcdataset(&self.name)
+    pub fn read_dataset(&self) -> Result<Dataset, DaemonError> {
+        self.backend.read_dataset(&self.name)
     }
 
-    pub fn remove_vcdataset(&self) -> Result<(), DaemonError> {
-        self.backend.remove_vcdataset(&self.name)
+    pub fn remove_dataset(&self) -> Result<(), DaemonError> {
+        self.backend.remove_dataset(&self.name)
     }
 
     pub fn store_pipeline_result_files(
         &self,
-        _dataset: &DatasetConfig,
         pipeline_result_paths: &[(String, String)],
         pipeline_hash: &str,
         tmp_files_path: &str,
@@ -114,7 +59,11 @@ impl DatasetConfig {
             .store_pipeline_result_files(self, pipeline_result_paths, pipeline_hash, tmp_files_path)
     }
 
-    pub fn get_pipeline_results(&self, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
-        self.backend.get_pipeline_results(&self.name, pipeline_hash)
+    // pub fn get_pipeline_results(&self, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
+    //     self.backend.get_pipeline_results(&self.name, pipeline_hash)
+    // }
+
+    pub fn get_pipeline_result(&self, pipeline_hash: &str, file_name: &str) -> Result<Vec<u8>, DaemonError> {
+        self.backend.get_pipeline_result(&self.name, pipeline_hash, file_name)
     }
 }

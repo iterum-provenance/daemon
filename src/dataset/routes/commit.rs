@@ -1,20 +1,15 @@
 use crate::config;
-use crate::dataset::{Branch, Commit, DatasetConfig};
+use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
-use crate::version_control;
 use actix_multipart::Multipart;
 use actix_web::{get, post, web, HttpResponse};
 use async_std::prelude::*;
 use futures::StreamExt;
 use iterum_rust::utils;
-
+use iterum_rust::vc::{error::VersionControlError, Branch, Commit, Dataset};
 use std::collections::HashMap;
-
 use std::fs;
-
 use std::time::Instant;
-use version_control::dataset::VCDataset;
-use version_control::error::VersionControlError;
 
 #[post("/{dataset}/commit")]
 async fn create_commit_with_data(
@@ -31,7 +26,7 @@ async fn create_commit_with_data(
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
 
-    let mut vc_dataset: VCDataset = config
+    let mut vc_dataset: Dataset = config
         .datasets
         .read()
         .unwrap()
@@ -99,7 +94,7 @@ async fn create_commit_with_data(
     {
         let mut datasets_ref = config.datasets.write().unwrap();
         dataset_config.store_committed_files(&commit, temp_path.to_string())?;
-        dataset_config.save_vcdataset(&vc_dataset)?;
+        dataset_config.save_dataset(&vc_dataset)?;
         datasets_ref.insert(dataset_path.to_string(), vc_dataset);
         std::fs::remove_dir_all(&temp_path)?;
     }

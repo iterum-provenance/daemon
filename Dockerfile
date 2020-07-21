@@ -24,6 +24,7 @@ FROM alpine:latest
 # RUN adduser -D -s /bin/sh -u 1000 -G idaemon idaemon
 # WORKDIR /home/idaemon/bin/
 COPY --from=cargo-build /usr/src/daemon/target/x86_64-unknown-linux-musl/release/daemon .
+RUN apk add rsync
 
 # RUN chown idaemon:idaemon daemon
 

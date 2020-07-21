@@ -1,17 +1,18 @@
-use crate::backend::storable::Storable;
 use crate::config;
 use crate::pipeline::models::PipelineResult;
-use crate::version_control;
 use actix_multipart::Multipart;
 use actix_web::{get, post, web, HttpResponse};
+use iterum_rust::vc::Dataset;
 
+use crate::dataset::models::DatasetConfig;
 use crate::error::DaemonError;
 use async_std::prelude::*;
 use futures::StreamExt;
 use iterum_rust::utils;
+use std::ffi::OsStr;
 use std::fs;
+use std::path::Path;
 use std::time::Instant;
-use version_control::dataset::VCDataset;
 
 #[post("/{dataset}/pipeline_result")]
 async fn create_pipeline_result(
@@ -23,18 +24,19 @@ async fn create_pipeline_result(
     let dataset_path = path.to_string();
     let pipeline = pipeline.into_inner();
 
-    let _vc_dataset: VCDataset = config
-        .cache
+    let _dataset_config: DatasetConfig = config
+        .local_config
         .get(&dataset_path)?
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
 
-    // vc_dataset = vc_dataset.add_pipeline_result(&pipeline)?;
-    // vc_dataset
-    //     .dataset
-    //     .backend
-    //     .save_vcdataset(&dataset_path, &vc_dataset)?;
-    // config.cache.insert(&dataset_path, &vc_dataset)?;
+    let _vc_dataset: Dataset = config
+        .datasets
+        .read()
+        .unwrap()
+        .get(&dataset_path)
+        .ok_or_else(|| DaemonError::NotFound)?
+        .clone();
     Ok(HttpResponse::Ok().json(&pipeline))
 }
 
@@ -49,7 +51,7 @@ async fn create_pipeline_result(
 //     ",
 //         dataset_path
 //     );
-//     let vc_dataset: VCDataset = config
+//     let vc_dataset: Dataset = config
 //         .cache
 //         .get(&dataset_path)?
 //         .ok_or_else(|| DaemonError::NotFound)?
@@ -63,29 +65,57 @@ async fn create_pipeline_result(
 //     Ok(HttpResponse::Ok().json(pipeline_result))
 // }
 
-#[get("/{dataset}/pipeline_result/{pipeline_hash}")]
+#[get("/{dataset}/pipeline_result/{pipeline_hash}/{filename}")]
 async fn get_pipeline_result(
     config: web::Data<config::Config>,
-    path: web::Path<(String, String)>,
+    path: web::Path<(String, String, String)>,
 ) -> Result<HttpResponse, DaemonError> {
-    let (dataset_path, pipeline_hash) = path.into_inner();
+    let (dataset_path, pipeline_hash, file_name) = path.into_inner();
     info!(
-        "Getting pipeline result {} from dataset {}",
-        pipeline_hash, dataset_path
+        "Getting pipeline result {}:{} from dataset {}",
+        pipeline_hash, file_name, dataset_path
     );
-    let vc_dataset: VCDataset = config
-        .cache
+    let dataset_config: DatasetConfig = config
+        .local_config
         .get(&dataset_path)?
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
 
-    let pipeline_result = vc_dataset
-        .dataset
-        .backend
-        .get_pipeline_results(&dataset_path, &pipeline_hash)?;
+    let pipeline_result: Vec<u8> = dataset_config.get_pipeline_result(&pipeline_hash, &file_name)?;
 
-    Ok(HttpResponse::Ok().json(pipeline_result))
+    let file_path = Path::new(&file_name);
+    let response = match file_path
+        .extension()
+        .and_then(OsStr::to_str)
+        .expect("Something wrong with the file")
+    {
+        "jpg" => HttpResponse::Ok().content_type("image/jpeg").body(pipeline_result),
+        _ => HttpResponse::Ok().body(pipeline_result),
+    };
+
+    Ok(response)
 }
+
+// #[get("/{dataset}/pipeline_result/{pipeline_hash}")]
+// async fn get_pipeline_results(
+//     config: web::Data<config::Config>,
+//     path: web::Path<(String, String)>,
+// ) -> Result<HttpResponse, DaemonError> {
+//     let (dataset_path, pipeline_hash) = path.into_inner();
+//     info!(
+//         "Getting pipeline result {} from dataset {}",
+//         pipeline_hash, dataset_path
+//     );
+//     let dataset_config: DatasetConfig = config
+//         .local_config
+//         .get(&dataset_path)?
+//         .ok_or_else(|| DaemonError::NotFound)?
+//         .into();
+
+//     let pipeline_result = dataset_config.get_pipeline_results(&pipeline_hash)?;
+
+//     Ok(HttpResponse::Ok().json(pipeline_result))
+// }
 
 #[post("/{dataset}/pipeline_result/{pipeline_hash}")]
 async fn add_result(
@@ -99,13 +129,10 @@ async fn add_result(
         pipeline_hash, dataset_path
     );
 
-    let vc_dataset: VCDataset = config
-        .cache
+    let dataset_config: DatasetConfig = config
+        .local_config
         .get(&dataset_path)?
-        .ok_or_else(|| {
-            error!("Could not find dataset..");
-            DaemonError::NotFound
-        })?
+        .ok_or_else(|| DaemonError::NotFound)?
         .into();
 
     // iterate over multipart stream
@@ -143,20 +170,12 @@ async fn add_result(
     debug!("Time to upload file \t{}ms", now.elapsed().as_millis());
 
     // Now move the files to the backend
-    vc_dataset.dataset.backend.store_pipeline_result_files(
-        &vc_dataset.dataset,
-        &file_list,
-        &pipeline_hash,
-        &temp_path.to_string(),
-    )?;
-
-    std::fs::remove_dir_all(&temp_path)?;
+    // Acquire write lock
+    {
+        let _datasets_ref = config.datasets.write().unwrap();
+        dataset_config.store_pipeline_result_files(&file_list, &pipeline_hash, &temp_path.to_string())?;
+        std::fs::remove_dir_all(&temp_path)?;
+    }
 
     Ok(HttpResponse::Ok().finish())
-}
-
-pub fn init_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(create_pipeline_result);
-    cfg.service(get_pipeline_result);
-    cfg.service(add_result);
 }

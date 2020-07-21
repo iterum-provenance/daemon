@@ -1,19 +1,13 @@
-use super::storable::Storable;
-use crate::dataset::{Commit, DatasetConfig};
+use super::Local;
+use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
-use crate::version_control::dataset::VCDataset;
-use serde::{Deserialize, Serialize};
+use iterum_rust::vc::{Commit, Dataset};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Local {
-    pub path: String,
-}
-
-impl Storable for Local {
-    fn store_committed_files(
+impl Local {
+    pub fn store_committed_files(
         &self,
         dataset: &DatasetConfig,
         commit: &Commit,
@@ -48,7 +42,7 @@ impl Storable for Local {
         Ok(())
     }
 
-    fn get_file(&self, dataset_path: &str, commit_hash: &str, filename: &str) -> Result<Vec<u8>, DaemonError> {
+    pub fn get_file(&self, dataset_path: &str, commit_hash: &str, filename: &str) -> Result<Vec<u8>, DaemonError> {
         let file_path = format!("{}{}/data/{}/{}", self.path, dataset_path, filename, commit_hash);
         match fs::read(&file_path) {
             Ok(contents) => Ok(contents),
@@ -59,7 +53,7 @@ impl Storable for Local {
         }
     }
 
-    fn save_vcdataset(&self, dataset_path: &str, vcdataset: &VCDataset) -> Result<(), DaemonError> {
+    pub fn save_dataset(&self, dataset_path: &str, dataset: &Dataset) -> Result<(), DaemonError> {
         let path = format!("{}{}", self.path, dataset_path);
         debug!("Path for dataset: {}", path);
         if !std::path::Path::new(&path).exists() {
@@ -68,62 +62,27 @@ impl Storable for Local {
         debug!("trying to create a new dataset..");
         fs::create_dir_all(&path)?;
         fs::create_dir_all(format!("{}/data", &path))?;
-        let string = serde_json::to_string_pretty(vcdataset)?;
-        let mut dataset_file = File::create(format!("{}/vcdataset.json", path))?;
+        let string = serde_json::to_string_pretty(dataset)?;
+        let mut dataset_file = File::create(format!("{}/dataset.json", path))?;
         dataset_file.write_all(&string.as_bytes())?;
 
         Ok(())
     }
 
-    fn read_vcdataset(&self, dataset_path: &str) -> Result<VCDataset, DaemonError> {
-        let path = format!("{}{}/vcdataset.json", self.path, dataset_path);
+    pub fn read_dataset(&self, dataset_path: &str) -> Result<Dataset, DaemonError> {
+        let path = format!("{}{}/dataset.json", self.path, dataset_path);
 
         let string = fs::read_to_string(path)?;
-        let vcdataset: VCDataset = serde_json::from_str(&string)?;
+        let dataset: Dataset = serde_json::from_str(&string)?;
 
-        Ok(vcdataset)
+        Ok(dataset)
     }
 
-    fn remove_vcdataset(&self, dataset_path: &str) -> Result<(), DaemonError> {
+    pub fn remove_dataset(&self, dataset_path: &str) -> Result<(), DaemonError> {
         let path = format!("{}{}", self.path, dataset_path);
         match fs::remove_dir_all(path) {
             Ok(()) => Ok(()),
             Err(_) => Ok(()),
         }
-    }
-
-    fn store_pipeline_result_files(
-        &self,
-        dataset: &DatasetConfig,
-        pipeline_result_paths: &[(String, String)],
-        pipeline_hash: &str,
-        _tmp_files_path: &str,
-    ) -> Result<(), std::io::Error> {
-        debug!("Adding files with names:");
-        for file in pipeline_result_paths {
-            let (filename, filepath) = file;
-            debug!("Pulling file from: {}", filepath);
-
-            let file_dir = format!("{}{}/runs/{}", self.path, dataset.name, pipeline_hash);
-            let file_folder_path = std::path::Path::new(&file_dir);
-            debug!("Dir path: {:?}", file_folder_path);
-            if !file_folder_path.exists() {
-                fs::create_dir_all(&file_folder_path).expect("Could not create temporary file directory.");
-            }
-            let new_filepath = format!("{}/{}", file_dir, filename);
-            debug!("Storing file in: {}", new_filepath);
-            fs::copy(&filepath, &new_filepath)?;
-        }
-
-        Ok(())
-    }
-
-    fn get_pipeline_results(&self, dataset_path: &str, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
-        let path = format!("{}{}/runs/{}", self.path, dataset_path, pipeline_hash);
-        let files: Vec<String> = fs::read_dir(path)?
-            .map(|direntry| direntry.unwrap().path().to_str().unwrap().into())
-            .collect();
-
-        Ok(files)
     }
 }

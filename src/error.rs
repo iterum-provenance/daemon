@@ -6,6 +6,7 @@ use serde_json::json;
 use std::error::Error;
 use std::fmt;
 // use std::option::NoneError;
+use iterum_rust::vc;
 
 #[derive(Debug)]
 pub enum DaemonError {
@@ -16,7 +17,7 @@ pub enum DaemonError {
     ParseError(ParseError),
     NotFound,
     AlreadyExists,
-    VersionControlError(String),
+    VersionControlError(vc::error::VersionControlError),
 }
 
 impl Error for DaemonError {}
@@ -73,20 +74,18 @@ impl ResponseError for DaemonError {
     fn error_response(&self) -> HttpResponse {
         let status_code = match self {
             DaemonError::NotFound => StatusCode::NOT_FOUND,
-            DaemonError::VersionControlError(_) | DaemonError::AlreadyExists => {
-                StatusCode::CONFLICT
-            }
+            DaemonError::VersionControlError(_) | DaemonError::AlreadyExists => StatusCode::CONFLICT,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         let message = format!("{}", self);
-        // match self {
-        //     DaemonError::Io(err) => format!("{}", err),
-        //     DaemonError::Serialization(err) => format!("{}", err),
-        //     DaemonError::Cache(err) => format!("{}", err),
-        //     DaemonError::NotFound(err) => format!("{}", err),
-        // };
 
         HttpResponse::build(status_code).json(json!({ "message": message }))
+    }
+}
+
+impl From<vc::error::VersionControlError> for DaemonError {
+    fn from(error: vc::error::VersionControlError) -> DaemonError {
+        DaemonError::VersionControlError(error)
     }
 }

@@ -2,10 +2,10 @@ use crate::backend::storable::Storable;
 use crate::config;
 use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
-use crate::version_control;
 use actix_web::{delete, get, post, web, HttpResponse};
+use iterum_rust::vc;
 use serde_json::json;
-use version_control::dataset::VCDataset;
+use vc::Dataset;
 
 #[post("/")]
 pub async fn create_dataset(
@@ -23,8 +23,8 @@ pub async fn create_dataset(
         .local_config
         .insert(dataset_path.to_string(), &dataset_config)
         .unwrap();
-    let vc_dataset = VCDataset::new();
-    dataset_config.backend.save_vcdataset(dataset_path, &vc_dataset)?;
+    let vc_dataset = Dataset::new();
+    dataset_config.backend.save_dataset(dataset_path, &vc_dataset)?;
     config
         .datasets
         .write()
@@ -77,7 +77,7 @@ async fn delete_dataset(
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
     config.datasets.write().unwrap().remove(&dataset_path).unwrap();
-    dataset_config.remove_vcdataset().unwrap();
+    dataset_config.remove_dataset().unwrap();
     config.local_config.remove(&dataset_path)?;
 
     Ok(HttpResponse::Ok().finish())
