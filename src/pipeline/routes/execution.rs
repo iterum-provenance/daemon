@@ -1,19 +1,9 @@
 use crate::config;
 use crate::dataset::models::DatasetConfig;
 use crate::error::DaemonError;
-use crate::pipeline::models::PipelineResult;
-use actix_multipart::Multipart;
 use actix_web::{delete, get, post, web, HttpResponse};
-use async_std::prelude::*;
-use futures::StreamExt;
 use iterum_rust::pipeline::PipelineExecution;
 use iterum_rust::provenance::FragmentLineage;
-use iterum_rust::utils;
-use iterum_rust::vc::Dataset;
-use std::ffi::OsStr;
-use std::fs;
-use std::path::Path;
-use std::time::Instant;
 
 #[get("/{dataset}/runs")]
 async fn get_pipeline_executions(
@@ -37,7 +27,7 @@ async fn get_pipeline_executions(
 fn find_dataset_conf_for_pipeline_hash(db: &sled::Db, pipeline_hash: &str) -> Option<DatasetConfig> {
     db.iter()
         .map(|elem| elem.unwrap())
-        .map(|(key, value)| {
+        .map(|(_key, value)| {
             // let dataset_name: String = key.into();
             let dataset_conf: DatasetConfig = value.into();
             dataset_conf

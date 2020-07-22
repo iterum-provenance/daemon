@@ -2,7 +2,6 @@ use crate::backend::Backend;
 use crate::error::DaemonError;
 use iterum_rust::vc::{Commit, Dataset};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 impl From<&DatasetConfig> for sled::IVec {
     fn from(dataset: &DatasetConfig) -> sled::IVec {
@@ -26,7 +25,6 @@ pub struct DatasetConfig {
     pub backend: Backend,
     pub description: String,
 }
-use crate::backend::storable::Storable;
 
 impl DatasetConfig {
     pub fn store_committed_files(&self, commit: &Commit, path: String) -> Result<(), std::io::Error> {

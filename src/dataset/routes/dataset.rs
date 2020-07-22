@@ -1,4 +1,3 @@
-use crate::backend::storable::Storable;
 use crate::config;
 use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
