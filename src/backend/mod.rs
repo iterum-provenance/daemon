@@ -1,12 +1,10 @@
 use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
 use iterum_rust::pipeline::PipelineExecution;
-
-// use crate::pipeline::models::PipelineResult;
+use iterum_rust::provenance::FragmentLineage;
 use iterum_rust::vc::{Commit, Dataset};
 use local::Local;
 use serde::{Deserialize, Serialize};
-// use storable::Storable;
 
 pub mod local;
 pub mod storable;
@@ -114,7 +112,8 @@ impl Backend {
     }
 
     // pub fn get_pipeline_results(&self, dataset_path: &str, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
-    //     match self {
+    //     match self {use iterum_rust::provenance::FragmentLineage;
+
     //         Backend::Local(backend) => backend.get_pipeline_results(dataset_path, pipeline_hash),
     //         _ => unimplemented!(),
     //     }
@@ -127,6 +126,41 @@ impl Backend {
     ) -> Result<Vec<u8>, DaemonError> {
         match self {
             Backend::Local(backend) => backend.get_pipeline_result(dataset_path, pipeline_hash, file_name),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn store_pipeline_fragment_lineage(
+        &self,
+        dataset: &DatasetConfig,
+        pipeline_hash: &str,
+        fragment: &FragmentLineage,
+    ) -> Result<(), DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.store_pipeline_fragment_lineage(dataset, pipeline_hash, fragment),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn get_pipeline_fragment_lineages(
+        &self,
+        dataset: &DatasetConfig,
+        pipeline_hash: &str,
+    ) -> Result<Vec<String>, DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.get_pipeline_fragment_lineages(dataset, pipeline_hash),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn get_pipeline_fragment_lineage(
+        &self,
+        dataset: &DatasetConfig,
+        pipeline_hash: &str,
+        fragment_id: &str,
+    ) -> Result<FragmentLineage, DaemonError> {
+        match self {
+            Backend::Local(backend) => backend.get_pipeline_fragment_lineage(dataset, pipeline_hash, fragment_id),
             _ => unimplemented!(),
         }
     }
