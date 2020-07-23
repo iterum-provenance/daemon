@@ -1,9 +1,8 @@
-use super::helpers::{find_all_pipelines, find_dataset_conf_for_pipeline_hash};
+use super::helpers::find_dataset_conf_for_pipeline_hash;
 use crate::config;
 use crate::dataset::models::DatasetConfig;
 use crate::error::DaemonError;
-use actix_web::{delete, get, post, web, HttpResponse};
-use iterum_rust::pipeline::PipelineExecution;
+use actix_web::{get, post, web, HttpResponse};
 use iterum_rust::provenance::FragmentLineage;
 
 #[post("/{dataset}/pipelines/{pipeline_hash}/lineage")]
