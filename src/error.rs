@@ -2,11 +2,10 @@ use actix_multipart::MultipartError;
 use actix_web::error::ParseError;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
+use iterum_rust::vc;
 use serde_json::json;
 use std::error::Error;
 use std::fmt;
-// use std::option::NoneError;
-use iterum_rust::vc;
 
 #[derive(Debug)]
 pub enum DaemonError {

@@ -7,15 +7,11 @@ use listenfd::ListenFd;
 use std::env;
 
 mod backend;
-// mod cache;
-pub mod config;
+mod config;
 mod dataset;
-// mod dataset_manager;
 mod error;
 mod pipeline;
 
-#[cfg(test)]
-mod tests;
 use crate::dataset::DatasetConfig;
 use iterum_rust::vc::Dataset;
 use std::collections::HashMap;
@@ -31,7 +27,6 @@ async fn main() -> std::io::Result<()> {
     let local_config_path = env::var("LOCAL_CONFIG_PATH").expect("LOCAL_CONFIG_PATH not set");
     let t = sled::open(&local_config_path).expect("Creation of local config db failed..");
 
-    // let dataset_configs: HashMap<String, DatasetConfig> = HashMap::new();
     let mut datasets: HashMap<String, Dataset> = HashMap::new();
     let len = &t.into_iter().count();
     info!("There are {} elements in the local cache.", len);
@@ -46,7 +41,6 @@ async fn main() -> std::io::Result<()> {
 
     let config = web::Data::new(config::Config {
         local_config: t,
-        // dataset_configs: RwLock::new(dataset_configs),
         datasets: RwLock::new(datasets),
     });
 
@@ -58,8 +52,8 @@ async fn main() -> std::io::Result<()> {
                 error!("{}", message);
                 actix_web::error::InternalError::from_response(err, HttpResponse::Conflict().body(message)).into()
             }))
-            .configure(dataset::init_routes)
             .configure(pipeline::init_routes)
+            .configure(dataset::init_routes)
     });
 
     server = match listenfd.take_tcp_listener(0)? {

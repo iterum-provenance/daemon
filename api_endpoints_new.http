@@ -11,40 +11,47 @@ DELETE {{address}}/{{dataset_path}} HTTP/1.1
 ### Get dataset
 GET {{address}}/{{dataset_path}} HTTP/1.1
 
-
 ### Get a list of datasets
 GET {{address}}/ HTTP/1.1
 
+### Get pipeline executions
+GET {{address}}/{{dataset_path}}/pipelines HTTP/1.1
 
 ### Get pipeline executions
-GET {{address}}/{{dataset_path}}/runs HTTP/1.1
+GET {{address}}/pipelines HTTP/1.1
 
-
-### Get pipeline executions
-GET {{address}}/{{dataset_path}}/runs/c1jpg28dvrzvxdmhjyj0swessm8kcxqi HTTP/1.1
+### Get pipeline run
+GET {{address}}/{{dataset_path}}/pipelines/ny84rq3vrpept5g5ufmikr3hpgfcorjd HTTP/1.1
 
 ### Get pipeline execution without dataset
-GET {{address}}/runs/a HTTP/1.1
+GET {{address}}/pipelines/a HTTP/1.1
 
 ### Reset state
 POST {{address}}/reset_state HTTP/1.1
 
+### Get lineages
+GET {{address}}/pipelines/h3zp5icwqtlulkr1dxogua152roahpzu/lineage HTTP/1.1
 
 ### Get lineages
-GET {{address}}/{{dataset_path}}runs/c1jpg28dvrzvxdmhjyj0swessm8kcxqi/lineage HTTP/1.1
+GET {{address}}/pipelines/h3zp5icwqtlulkr1dxogua152roahpzu/lineage/qdjs5q9f5b93qfhubkri4k46rg2dp9s8ay5v5h9aexbmfecustgavc8oewktwb9o HTTP/1.1
 
-/{dataset}/runs/{pipeline_hash}/lineage
 
 @manager_address = http://localhost:3001
 ### Get dataset
-GET {{manager_address}}/pipelines/c1jpg28dvrzvxdmhjyj0swessm8kcxqi HTTP/1.1
+GET {{manager_address}}/pipelines/rfkkxb5vlc80lwcgqjdfeub8gdtw0g0o HTTP/1.1
+
+### Get pipeline executions
+GET {{manager_address}}/pipelines HTTP/1.1
 
 ### Get status
-GET {{manager_address}}/pipelines/c1jpg28dvrzvxdmhjyj0swessm8kcxqi/status HTTP/1.1
+GET {{manager_address}}/pipelines/ny84rq3vrpept5g5ufmikr3hpgfcorjd/status HTTP/1.1
 
 ### Delete specific pipeline
-DELETE {{manager_address}}/pipelines/emh3ume4gmt7zkq8kcjzwlohb2z2t9sg HTTP/1.1
+DELETE {{manager_address}}/pipelines/ny84rq3vrpept5g5ufmikr3hpgfcorjd HTTP/1.1
 
+
+### Purge specific pipeline
+DELETE {{manager_address}}/pipelines/ny84rq3vrpept5g5ufmikr3hpgfcorjd/purge HTTP/1.1
 
 
 

@@ -1,12 +1,12 @@
+use super::helpers::{find_all_pipelines, find_dataset_conf_for_pipeline_hash};
 use crate::config;
 use crate::dataset::models::DatasetConfig;
 use crate::error::DaemonError;
 use actix_web::{delete, get, post, web, HttpResponse};
 use iterum_rust::pipeline::PipelineExecution;
-use iterum_rust::provenance::FragmentLineage;
 
-#[get("/{dataset}/runs")]
-async fn get_pipeline_executions(
+#[get("/{dataset}/pipelines")]
+async fn get_dataset_pipeline_executions(
     config: web::Data<config::Config>,
     path: web::Path<String>,
 ) -> Result<HttpResponse, DaemonError> {
@@ -24,23 +24,14 @@ async fn get_pipeline_executions(
     Ok(HttpResponse::Ok().json(&pipeline_executions))
 }
 
-fn find_dataset_conf_for_pipeline_hash(db: &sled::Db, pipeline_hash: &str) -> Option<DatasetConfig> {
-    db.iter()
-        .map(|elem| elem.unwrap())
-        .map(|(_key, value)| {
-            // let dataset_name: String = key.into();
-            let dataset_conf: DatasetConfig = value.into();
-            dataset_conf
-        })
-        .find(|conf| {
-            conf.backend
-                .get_pipeline_executions(&conf.name)
-                .unwrap()
-                .contains(&pipeline_hash.to_owned())
-        })
+#[get("/pipelines")]
+async fn get_pipeline_executions(config: web::Data<config::Config>) -> Result<HttpResponse, DaemonError> {
+    info!("Getting pipeline executions");
+    let pipeline_executions = find_all_pipelines(&config.local_config);
+    Ok(HttpResponse::Ok().json(&pipeline_executions))
 }
 
-#[get("/runs/{pipeline_hash}")]
+#[get("/pipelines/{pipeline_hash}")]
 async fn get_pipeline_execution_without_dataset(
     config: web::Data<config::Config>,
     path: web::Path<String>,
@@ -60,7 +51,7 @@ async fn get_pipeline_execution_without_dataset(
     Ok(HttpResponse::Ok().json(&pipeline_execution))
 }
 
-#[get("/{dataset}/runs/{pipeline_hash}")]
+#[get("/{dataset}/pipelines/{pipeline_hash}")]
 async fn get_pipeline_execution(
     config: web::Data<config::Config>,
     path: web::Path<(String, String)>,
@@ -84,7 +75,7 @@ async fn get_pipeline_execution(
     Ok(HttpResponse::Ok().json(&pipeline_execution))
 }
 
-#[post("/{dataset}/runs")]
+#[post("/{dataset}/pipelines")]
 async fn create_pipeline_execution(
     config: web::Data<config::Config>,
     path: web::Path<String>,
@@ -108,7 +99,7 @@ async fn create_pipeline_execution(
     Ok(HttpResponse::Ok().json(&pipeline_execution))
 }
 
-#[delete("/runs/{pipeline_hash}")]
+#[delete("/pipelines/{pipeline_hash}")]
 async fn delete_pipeline_execution(
     config: web::Data<config::Config>,
     path: web::Path<String>,
@@ -127,73 +118,4 @@ async fn delete_pipeline_execution(
         .remove_pipeline_execution(&dataset_config, &pipeline_hash)?;
 
     Ok(HttpResponse::Ok().finish())
-}
-
-#[post("/{dataset}/runs/{pipeline_hash}/lineage")]
-async fn post_fragment_lineage(
-    config: web::Data<config::Config>,
-    path: web::Path<(String, String)>,
-    fragment_lineage: web::Json<FragmentLineage>,
-) -> Result<HttpResponse, DaemonError> {
-    info!("Posting fragment lineage");
-
-    let (dataset_path, pipeline_hash) = path.into_inner();
-    let fragment_lineage = fragment_lineage.into_inner();
-
-    let dataset_config: DatasetConfig = config
-        .local_config
-        .get(&dataset_path)?
-        .ok_or_else(|| DaemonError::NotFound)?
-        .into();
-
-    dataset_config
-        .backend
-        .store_pipeline_fragment_lineage(&dataset_config, &pipeline_hash, &fragment_lineage)?;
-
-    Ok(HttpResponse::Ok().finish())
-}
-
-#[get("/{dataset}/runs/{pipeline_hash}/lineage")]
-async fn get_fragment_lineages(
-    config: web::Data<config::Config>,
-    path: web::Path<(String, String)>,
-) -> Result<HttpResponse, DaemonError> {
-    info!("Retrieving fragment lineages");
-
-    let (dataset_path, pipeline_hash) = path.into_inner();
-
-    let dataset_config: DatasetConfig = config
-        .local_config
-        .get(&dataset_path)?
-        .ok_or_else(|| DaemonError::NotFound)?
-        .into();
-
-    let fragment_lineages = dataset_config
-        .backend
-        .get_pipeline_fragment_lineages(&dataset_config, &pipeline_hash)?;
-
-    Ok(HttpResponse::Ok().json(fragment_lineages))
-}
-
-#[get("/{dataset}/runs/{pipeline_hash}/lineage/{fragment_id}")]
-async fn get_fragment_lineage(
-    config: web::Data<config::Config>,
-    path: web::Path<(String, String, String)>,
-) -> Result<HttpResponse, DaemonError> {
-    info!("Retrieving fragment lineage");
-
-    let (dataset_path, pipeline_hash, fragment_id) = path.into_inner();
-
-    let dataset_config: DatasetConfig = config
-        .local_config
-        .get(&dataset_path)?
-        .ok_or_else(|| DaemonError::NotFound)?
-        .into();
-
-    let fragment_lineage =
-        dataset_config
-            .backend
-            .get_pipeline_fragment_lineage(&dataset_config, &pipeline_hash, &fragment_id)?;
-
-    Ok(HttpResponse::Ok().json(fragment_lineage))
 }

@@ -7,7 +7,6 @@ use local::Local;
 use serde::{Deserialize, Serialize};
 
 pub mod local;
-pub mod storable;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "backend", content = "credentials")]

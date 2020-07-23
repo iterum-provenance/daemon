@@ -4,7 +4,6 @@ use crate::error::DaemonError;
 use iterum_rust::pipeline::PipelineExecution;
 use iterum_rust::provenance::FragmentLineage;
 
-
 use std::fs;
 use std::fs::File;
 use std::io::Write;
