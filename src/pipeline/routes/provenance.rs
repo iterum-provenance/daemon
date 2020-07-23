@@ -1,3 +1,4 @@
+use super::helpers::{find_all_pipelines, find_dataset_conf_for_pipeline_hash};
 use crate::config;
 use crate::dataset::models::DatasetConfig;
 use crate::error::DaemonError;
