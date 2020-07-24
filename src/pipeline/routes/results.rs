@@ -11,7 +11,6 @@ use iterum_rust::utils;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
-use std::time::Instant;
 
 /// Creates a new results for a pipeline, and stores it on the storage backend
 /// First stores the data in a temporary folder. Then redirects the data to the storage backend.
