@@ -1,9 +1,9 @@
+//! The different routes for the data versioning server
 mod branch;
 mod commit;
 mod dataset;
 mod misc;
 use actix_web::web;
-
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(dataset::delete_dataset);
     cfg.service(dataset::create_dataset);

@@ -1,7 +1,7 @@
+use super::helpers::find_dataset_conf_for_pipeline_hash;
 use crate::config;
 use crate::dataset::models::DatasetConfig;
 use crate::error::DaemonError;
-use crate::pipeline::models::PipelineResult;
 use actix_multipart::Multipart;
 use actix_web::{get, post, web, HttpResponse};
 use async_std::prelude::*;
@@ -13,107 +13,30 @@ use std::fs;
 use std::path::Path;
 use std::time::Instant;
 
-#[post("/{dataset}/pipeline_result")]
-async fn create_pipeline_result(
-    config: web::Data<config::Config>,
-    path: web::Path<String>,
-    pipeline: web::Json<PipelineResult>,
-) -> Result<HttpResponse, DaemonError> {
-    info!("Creating new pipeline with hash {:?}", pipeline);
-    let dataset_path = path.to_string();
-    let pipeline = pipeline.into_inner();
-
-    let _dataset_config: DatasetConfig = config
-        .local_config
-        .get(&dataset_path)?
-        .ok_or_else(|| DaemonError::NotFound)?
-        .into();
-
-    let _vc_dataset: Dataset = config
-        .datasets
-        .read()
-        .unwrap()
-        .get(&dataset_path)
-        .ok_or_else(|| DaemonError::NotFound)?
-        .clone();
-    Ok(HttpResponse::Ok().json(&pipeline))
-}
-
-// #[get("/{dataset}/pipelines")]
-// async fn get_pipelines_for_dataset(
+// #[post("/{dataset}/pipeline_result")]
+// async fn create_pipeline_result(
 //     config: web::Data<config::Config>,
 //     path: web::Path<String>,
+//     pipeline: web::Json<PipelineResult>,
 // ) -> Result<HttpResponse, DaemonError> {
-//     let dataset_path = path.into_inner();
-//     info!(
-//         "Getting pipelines for dataset {}
-//     ",
-//         dataset_path
-//     );
-//     let vc_dataset: Dataset = config
-//         .cache
-//         .get(&dataset_path)?
-//         .ok_or_else(|| DaemonError::NotFound)?
-//         .into();
+//     info!("Creating new pipeline with hash {:?}", pipeline);
+//     let dataset_path = path.to_string();
+//     let pipeline = pipeline.into_inner();
 
-//     // let pipeline_result = vc_dataset
-//     //     .dataset
-//     //     .backend
-//     //     .get_pipeline_results(&dataset_path, &pipeline_hash)?;
-
-//     Ok(HttpResponse::Ok().json(pipeline_result))
-// }
-
-#[get("/{dataset}/pipeline_result/{pipeline_hash}/{filename}")]
-async fn get_pipeline_result(
-    config: web::Data<config::Config>,
-    path: web::Path<(String, String, String)>,
-) -> Result<HttpResponse, DaemonError> {
-    let (dataset_path, pipeline_hash, file_name) = path.into_inner();
-    info!(
-        "Getting pipeline result {}:{} from dataset {}",
-        pipeline_hash, file_name, dataset_path
-    );
-    let dataset_config: DatasetConfig = config
-        .local_config
-        .get(&dataset_path)?
-        .ok_or_else(|| DaemonError::NotFound)?
-        .into();
-
-    let pipeline_result: Vec<u8> = dataset_config.get_pipeline_result(&pipeline_hash, &file_name)?;
-
-    let file_path = Path::new(&file_name);
-    let response = match file_path
-        .extension()
-        .and_then(OsStr::to_str)
-        .expect("Something wrong with the file")
-    {
-        "jpg" => HttpResponse::Ok().content_type("image/jpeg").body(pipeline_result),
-        _ => HttpResponse::Ok().body(pipeline_result),
-    };
-
-    Ok(response)
-}
-
-// #[get("/{dataset}/pipeline_result/{pipeline_hash}")]
-// async fn get_pipeline_results(
-//     config: web::Data<config::Config>,
-//     path: web::Path<(String, String)>,
-// ) -> Result<HttpResponse, DaemonError> {
-//     let (dataset_path, pipeline_hash) = path.into_inner();
-//     info!(
-//         "Getting pipeline result {} from dataset {}",
-//         pipeline_hash, dataset_path
-//     );
-//     let dataset_config: DatasetConfig = config
+//     let _dataset_config: DatasetConfig = config
 //         .local_config
 //         .get(&dataset_path)?
 //         .ok_or_else(|| DaemonError::NotFound)?
 //         .into();
 
-//     let pipeline_result = dataset_config.get_pipeline_results(&pipeline_hash)?;
-
-//     Ok(HttpResponse::Ok().json(pipeline_result))
+//     let _vc_dataset: Dataset = config
+//         .datasets
+//         .read()
+//         .unwrap()
+//         .get(&dataset_path)
+//         .ok_or_else(|| DaemonError::NotFound)?
+//         .clone();
+//     Ok(HttpResponse::Ok().json(&pipeline))
 // }
 
 #[post("/{dataset}/pipeline_result/{pipeline_hash}")]
@@ -153,10 +76,6 @@ async fn add_result(
         let filepath = format!("{}{}", &temp_path, &filename);
         debug!("Saving file to {}", filepath);
         debug!("Filename: {}", filename);
-        // let parent_path = std::path::Path::new(&filepath).parent().unwrap();
-        // if !parent_path.exists() {
-        //     fs::create_dir_all(&parent_path).expect("Could not create temporary file directory.");
-        // }
 
         let mut f = async_std::fs::File::create(&filepath).await?;
         // Field in turn is stream of *Bytes* object
@@ -177,4 +96,46 @@ async fn add_result(
     }
 
     Ok(HttpResponse::Ok().finish())
+}
+
+#[get("/pipelines/{pipeline_hash}/results/{filename}")]
+async fn get_pipeline_result(
+    config: web::Data<config::Config>,
+    path: web::Path<(String, String)>,
+) -> Result<HttpResponse, DaemonError> {
+    let (pipeline_hash, file_name) = path.into_inner();
+    info!("Getting pipeline result {}:{}", pipeline_hash, file_name);
+    let dataset_config = match find_dataset_conf_for_pipeline_hash(&config.local_config, &pipeline_hash) {
+        Some(conf) => conf,
+        None => return Ok(HttpResponse::NotFound().finish()),
+    };
+    let pipeline_result: Vec<u8> = dataset_config.get_pipeline_result(&pipeline_hash, &file_name)?;
+
+    let file_path = Path::new(&file_name);
+    let response = match file_path
+        .extension()
+        .and_then(OsStr::to_str)
+        .expect("Something wrong with the file")
+    {
+        "jpg" => HttpResponse::Ok().content_type("image/jpeg").body(pipeline_result),
+        _ => HttpResponse::Ok().body(pipeline_result),
+    };
+
+    Ok(response)
+}
+
+#[get("/pipelines/{pipeline_hash}/results")]
+async fn get_pipeline_results(
+    config: web::Data<config::Config>,
+    path: web::Path<String>,
+) -> Result<HttpResponse, DaemonError> {
+    let pipeline_hash = path.into_inner();
+    info!("Getting pipeline result {}", pipeline_hash);
+    let dataset_config = match find_dataset_conf_for_pipeline_hash(&config.local_config, &pipeline_hash) {
+        Some(conf) => conf,
+        None => return Ok(HttpResponse::NotFound().finish()),
+    };
+    let pipeline_result = dataset_config.get_pipeline_results(&pipeline_hash)?;
+
+    Ok(HttpResponse::Ok().json(pipeline_result))
 }

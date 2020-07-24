@@ -6,6 +6,7 @@ use std::ffi::OsStr;
 use std::path::Path;
 use std::time::Instant;
 
+/// Retrieves a file from a dataset. Used by both the CLI and the Fragmenter to retrieve files.
 #[get("/{dataset}/file/{file}/{commit}")]
 async fn get_file(
     config: web::Data<config::Config>,

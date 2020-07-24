@@ -5,8 +5,8 @@ pub mod results;
 use actix_web::web;
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(results::create_pipeline_result);
     cfg.service(results::get_pipeline_result);
+    cfg.service(results::get_pipeline_results);
     cfg.service(results::add_result);
     cfg.service(execution::get_pipeline_executions);
     cfg.service(execution::get_dataset_pipeline_executions);

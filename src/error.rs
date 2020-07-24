@@ -1,3 +1,4 @@
+//! The various errors that the daemon produces, and the corresponding From<T> functions are in this module.
 use actix_multipart::MultipartError;
 use actix_web::error::ParseError;
 use actix_web::http::StatusCode;
@@ -7,6 +8,7 @@ use serde_json::json;
 use std::error::Error;
 use std::fmt;
 
+/// Various errors can be cast to this error, and this error can then in-turn be cast into an HttpResponse for endpoints.
 #[derive(Debug)]
 pub enum DaemonError {
     Io(std::io::Error),

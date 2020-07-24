@@ -57,9 +57,9 @@ impl DatasetConfig {
             .store_pipeline_result_files(self, pipeline_result_paths, pipeline_hash, tmp_files_path)
     }
 
-    // pub fn get_pipeline_results(&self, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
-    //     self.backend.get_pipeline_results(&self.name, pipeline_hash)
-    // }
+    pub fn get_pipeline_results(&self, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
+        self.backend.get_pipeline_results(&self.name, pipeline_hash)
+    }
 
     pub fn get_pipeline_result(&self, pipeline_hash: &str, file_name: &str) -> Result<Vec<u8>, DaemonError> {
         self.backend.get_pipeline_result(&self.name, pipeline_hash, file_name)

@@ -47,11 +47,14 @@ GET {{manager_address}}/pipelines HTTP/1.1
 GET {{manager_address}}/pipelines/ny84rq3vrpept5g5ufmikr3hpgfcorjd/status HTTP/1.1
 
 ### Delete specific pipeline
-DELETE {{manager_address}}/pipelines/ny84rq3vrpept5g5ufmikr3hpgfcorjd HTTP/1.1
+DELETE {{manager_address}}/pipelines/h3zp5icwqtlulkr1dxogua152roahpzu HTTP/1.1
 
 
 ### Purge specific pipeline
-DELETE {{manager_address}}/pipelines/ny84rq3vrpept5g5ufmikr3hpgfcorjd/purge HTTP/1.1
+DELETE {{manager_address}}/pipelines/h3zp5icwqtlulkr1dxogua152roahpzu/purge HTTP/1.1
+
+### Purge specific pipeline
+DELETE {{address}}/pipelines/5dwts5tsuoujbjdrcmpgt5t5qqcn2cr2/results HTTP/1.1
 
 
 

@@ -79,30 +79,27 @@ impl Local {
         pipeline_hash: &str,
         _tmp_files_path: &str,
     ) -> Result<(), std::io::Error> {
-        debug!("Adding files with names:");
         for file in pipeline_result_paths {
             let (filename, filepath) = file;
-            debug!("Pulling file from: {}", filepath);
             let path = self.get_pipeline_path(&dataset.name, &pipeline_hash).join("results");
             if !path.exists() {
                 fs::create_dir_all(&path).expect("Could not create pipeline directory.");
             }
             let new_filepath = path.join(filename);
-            debug!("Storing file in: {:?}", new_filepath);
             fs::copy(&filepath, &new_filepath)?;
         }
 
         Ok(())
     }
 
-    // pub fn get_pipeline_results(&self, dataset_path: &str, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
-    //     let path = self.get_pipeline_path(dataset_path, &pipeline_hash);
-    //     let files: Vec<String> = fs::read_dir(path)?
-    //         .map(|direntry| direntry.unwrap().file_name().to_str().unwrap().into())
-    //         .collect();
+    pub fn get_pipeline_results(&self, dataset_path: &str, pipeline_hash: &str) -> Result<Vec<String>, DaemonError> {
+        let path = self.get_pipeline_path(dataset_path, &pipeline_hash).join("results");
+        let files: Vec<String> = fs::read_dir(path)?
+            .map(|direntry| direntry.unwrap().file_name().to_str().unwrap().into())
+            .collect();
 
-    //     Ok(files)
-    // }
+        Ok(files)
+    }
 
     pub fn get_pipeline_result(
         &self,
@@ -128,7 +125,6 @@ impl Local {
         pipeline_hash: &str,
         fragment: &FragmentLineage,
     ) -> Result<(), DaemonError> {
-        info!("Adding fragment lineage");
         let path = self.get_pipeline_path(&dataset.name, &pipeline_hash).join("lineage");
         if !path.exists() {
             fs::create_dir_all(&path).expect("Could not create lineage directory.");
@@ -145,7 +141,6 @@ impl Local {
         dataset: &DatasetConfig,
         pipeline_hash: &str,
     ) -> Result<Vec<String>, DaemonError> {
-        info!("Getting fragment lineage");
         let path = self.get_pipeline_path(&dataset.name, &pipeline_hash).join("lineage");
 
         let fragments: Vec<String> = fs::read_dir(path)?
@@ -161,7 +156,6 @@ impl Local {
         pipeline_hash: &str,
         fragment_id: &str,
     ) -> Result<FragmentLineage, DaemonError> {
-        info!("Getting fragment lineage");
         let path = self.get_pipeline_path(&dataset.name, &pipeline_hash).join("lineage");
         let file_path = path.join(fragment_id);
 
