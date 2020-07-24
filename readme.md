@@ -16,4 +16,4 @@ The source code is split into three main modules:
 * *backend*, responsible for communicating with storage backends
 * *pipeline*, responsible for the managing of results and provenance information of pipelines
 
-These top-level modules are further split into submodules. This is further explained lower-level code documentation. The command `cargo doc --no-deps --open` can be run to compile the documentation for this project. The command opens up a browsable site where the code documentation for each module can be read.
+These top-level modules are further split into submodules. This is further explained in the lower-level code documentation. The command `cargo doc --no-deps --open` can be run to compile the documentation for this project. The command opens up a browsable site where the code documentation for each module can be read.
