@@ -1,10 +1,11 @@
+//! Routes related to managing branches of a dataset
 use crate::config;
 use crate::dataset::DatasetConfig;
-use iterum_rust::vc::{error::VersionControlError, Branch, Dataset};
-
 use crate::error::DaemonError;
 use actix_web::{get, post, web, HttpResponse};
+use iterum_rust::vc::{error::VersionControlError, Branch, Dataset};
 
+/// Creates a branch for a dataset
 #[post("/{dataset}/branch")]
 async fn create_branch(
     config: web::Data<config::Config>,
@@ -40,6 +41,7 @@ async fn create_branch(
     Ok(HttpResponse::Ok().json(&branch))
 }
 
+/// Retrieves a branch from a dataset
 #[get("/{dataset}/branch/{branch_hash}")]
 async fn get_branch(
     config: web::Data<config::Config>,

@@ -1,5 +1,7 @@
+//! Contains some helper functions, which are used by some of the route endpoints
 use crate::dataset::models::DatasetConfig;
 
+/// Helper function to find a DatasetConfig, by iterating over the datasets known to the daemon
 pub fn find_dataset_conf_for_pipeline_hash(db: &sled::Db, pipeline_hash: &str) -> Option<DatasetConfig> {
     db.iter()
         .map(|elem| elem.unwrap())
@@ -16,6 +18,7 @@ pub fn find_dataset_conf_for_pipeline_hash(db: &sled::Db, pipeline_hash: &str) -
         })
 }
 
+/// Helper function to find all pipelines known to the daemon
 pub fn find_all_pipelines(db: &sled::Db) -> Vec<String> {
     db.iter()
         .map(|elem| elem.unwrap())

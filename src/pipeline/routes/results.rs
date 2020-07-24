@@ -1,3 +1,4 @@
+//! Contains routes with regards to results of a pipeline execution
 use super::helpers::find_dataset_conf_for_pipeline_hash;
 use crate::config;
 use crate::dataset::models::DatasetConfig;
@@ -7,38 +8,13 @@ use actix_web::{get, post, web, HttpResponse};
 use async_std::prelude::*;
 use futures::StreamExt;
 use iterum_rust::utils;
-use iterum_rust::vc::Dataset;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
 use std::time::Instant;
 
-// #[post("/{dataset}/pipeline_result")]
-// async fn create_pipeline_result(
-//     config: web::Data<config::Config>,
-//     path: web::Path<String>,
-//     pipeline: web::Json<PipelineResult>,
-// ) -> Result<HttpResponse, DaemonError> {
-//     info!("Creating new pipeline with hash {:?}", pipeline);
-//     let dataset_path = path.to_string();
-//     let pipeline = pipeline.into_inner();
-
-//     let _dataset_config: DatasetConfig = config
-//         .local_config
-//         .get(&dataset_path)?
-//         .ok_or_else(|| DaemonError::NotFound)?
-//         .into();
-
-//     let _vc_dataset: Dataset = config
-//         .datasets
-//         .read()
-//         .unwrap()
-//         .get(&dataset_path)
-//         .ok_or_else(|| DaemonError::NotFound)?
-//         .clone();
-//     Ok(HttpResponse::Ok().json(&pipeline))
-// }
-
+/// Creates a new results for a pipeline, and stores it on the storage backend
+/// First stores the data in a temporary folder. Then redirects the data to the storage backend.
 #[post("/{dataset}/pipeline_result/{pipeline_hash}")]
 async fn add_result(
     config: web::Data<config::Config>,
@@ -57,13 +33,10 @@ async fn add_result(
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
 
-    // iterate over multipart stream
-    let now = Instant::now();
+    // Store data in temporary folder
     let temp_path = format!("./.tmp/{}/", utils::create_random_hash());
     fs::create_dir_all(&temp_path).expect("Could not create temporary file directory.");
-
     let mut file_list: Vec<(String, String)> = Vec::new();
-
     while let Some(item) = payload.next().await {
         let mut field = item?;
         let content_disp = field
@@ -85,7 +58,6 @@ async fn add_result(
         }
         file_list.push((filename.to_string(), filepath));
     }
-    debug!("Time to upload file \t{}ms", now.elapsed().as_millis());
 
     // Now move the files to the backend
     // Acquire write lock
@@ -98,6 +70,7 @@ async fn add_result(
     Ok(HttpResponse::Ok().finish())
 }
 
+/// Get specific result from a pipeline
 #[get("/pipelines/{pipeline_hash}/results/{filename}")]
 async fn get_pipeline_result(
     config: web::Data<config::Config>,
@@ -124,6 +97,7 @@ async fn get_pipeline_result(
     Ok(response)
 }
 
+/// Get list of results for a pipeline
 #[get("/pipelines/{pipeline_hash}/results")]
 async fn get_pipeline_results(
     config: web::Data<config::Config>,

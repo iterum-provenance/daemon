@@ -1,3 +1,4 @@
+//! Contains the routes related to a PipelineExecution, which is a specific instance of a PipelineRun, with corresponding lineage info, status and results.
 use super::helpers::{find_all_pipelines, find_dataset_conf_for_pipeline_hash};
 use crate::config;
 use crate::dataset::models::DatasetConfig;
@@ -5,6 +6,7 @@ use crate::error::DaemonError;
 use actix_web::{delete, get, post, web, HttpResponse};
 use iterum_rust::pipeline::PipelineExecution;
 
+/// Retrieve the different pipeline executions for a dataset
 #[get("/{dataset}/pipelines")]
 async fn get_dataset_pipeline_executions(
     config: web::Data<config::Config>,
@@ -24,6 +26,7 @@ async fn get_dataset_pipeline_executions(
     Ok(HttpResponse::Ok().json(&pipeline_executions))
 }
 
+/// Retrieve the different pipeline executions for all datasets
 #[get("/pipelines")]
 async fn get_pipeline_executions(config: web::Data<config::Config>) -> Result<HttpResponse, DaemonError> {
     info!("Getting pipeline executions");
@@ -31,6 +34,7 @@ async fn get_pipeline_executions(config: web::Data<config::Config>) -> Result<Ht
     Ok(HttpResponse::Ok().json(&pipeline_executions))
 }
 
+/// Retrieve a specific pipeline execution, without knowing the dataset beforehand
 #[get("/pipelines/{pipeline_hash}")]
 async fn get_pipeline_execution_without_dataset(
     config: web::Data<config::Config>,
@@ -51,6 +55,7 @@ async fn get_pipeline_execution_without_dataset(
     Ok(HttpResponse::Ok().json(&pipeline_execution))
 }
 
+/// Retrieve a specific pipeline execution
 #[get("/{dataset}/pipelines/{pipeline_hash}")]
 async fn get_pipeline_execution(
     config: web::Data<config::Config>,
@@ -75,6 +80,7 @@ async fn get_pipeline_execution(
     Ok(HttpResponse::Ok().json(&pipeline_execution))
 }
 
+/// Create a new pipeline execution on a dataset
 #[post("/{dataset}/pipelines")]
 async fn create_pipeline_execution(
     config: web::Data<config::Config>,
@@ -99,6 +105,7 @@ async fn create_pipeline_execution(
     Ok(HttpResponse::Ok().json(&pipeline_execution))
 }
 
+/// Delete a specific pipeline execution
 #[delete("/pipelines/{pipeline_hash}")]
 async fn delete_pipeline_execution(
     config: web::Data<config::Config>,

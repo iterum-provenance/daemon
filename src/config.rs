@@ -5,8 +5,10 @@ use sled::Db;
 use std::collections::HashMap;
 use std::sync::RwLock;
 
+/// Structure which is shared between the actix workers.
 pub struct Config {
+    /// Reference to the `sled` db, which is the local kv-store where dataset configs are saved.
     pub local_config: Db,
-    // pub dataset_configs: RwLock<HashMap<String, DatasetConfig>>,
+    /// HashMap which stores the metadata of datasets in memory, instead of constantly having to retrieve data from a storage backend.
     pub datasets: RwLock<HashMap<String, Dataset>>,
 }

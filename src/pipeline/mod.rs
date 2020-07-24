@@ -1,4 +1,3 @@
-//! Contains routes with regards to management of pipelines. The routes are further split up into submodules.
-
+//! Contains logic with regards to management of pipelines.
 pub mod routes;
 pub use routes::init_routes;

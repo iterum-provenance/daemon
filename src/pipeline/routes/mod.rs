@@ -1,9 +1,12 @@
+//! Contains routes with regards to management of pipelines. The routes are further split up into submodules.
+
 pub mod execution;
 mod helpers;
 pub mod provenance;
 pub mod results;
 use actix_web::web;
 
+/// Initializes the different routes, such that Actix exposes the endpoints
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(results::get_pipeline_result);
     cfg.service(results::get_pipeline_results);

@@ -1,3 +1,5 @@
+//! Routes related to managing branches of a dataset
+
 use crate::config;
 use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
@@ -17,24 +19,16 @@ async fn get_file(
         "Getting file {} from commit {} from dataset {}",
         filename, commit_hash, dataset_path
     );
-    let now = Instant::now();
 
     let dataset_config: DatasetConfig = config
         .local_config
         .get(&dataset_path)?
         .ok_or_else(|| DaemonError::NotFound)?
         .into();
-    // let datasets = config.datasets.read().unwrap();
-    // let vc_dataset = datasets.get(&dataset_path).ok_or_else(|| DaemonError::NotFound)?;
+
     // Perhaps add a check to see if the file exists in the dataset?
-    info!("{}:Retrieving dataset takes {}", filename, now.elapsed().as_millis());
-
-    let now = Instant::now();
     let file_data: Vec<u8> = dataset_config.get_file(&commit_hash, &filename)?;
-    info!("{}:Retrieving file takes {}", filename, now.elapsed().as_millis());
-
     let file_path = Path::new(&filename);
-    let now = Instant::now();
     let response = match file_path
         .extension()
         .and_then(OsStr::to_str)
@@ -43,10 +37,10 @@ async fn get_file(
         "jpg" => HttpResponse::Ok().content_type("image/jpeg").body(file_data),
         _ => HttpResponse::Ok().body(file_data),
     };
-    info!("{}:Constructing response takes {}", filename, now.elapsed().as_millis());
     Ok(response)
 }
 
+/// Removes all of the datasets known to the daemon, and also clear the local kv-store.
 #[post("/reset_state")]
 pub async fn reset_state(config: web::Data<config::Config>) -> Result<HttpResponse, DaemonError> {
     debug!("Removing all state from the daemon.");
@@ -64,6 +58,7 @@ pub async fn reset_state(config: web::Data<config::Config>) -> Result<HttpRespon
     Ok(HttpResponse::Ok().finish())
 }
 
+/// Retrieve the version tree for the dataset.
 #[get("/{dataset}/vtree")]
 async fn get_vtree(config: web::Data<config::Config>, path: web::Path<String>) -> Result<HttpResponse, DaemonError> {
     info!("Getting vtree from dataset with path {:?}", path);

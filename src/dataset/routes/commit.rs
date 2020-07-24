@@ -1,3 +1,4 @@
+//! Routes related to managing commits of a dataset
 use crate::config;
 use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
@@ -9,8 +10,9 @@ use iterum_rust::utils;
 use iterum_rust::vc::{error::VersionControlError, Branch, Commit, Dataset};
 use std::collections::HashMap;
 use std::fs;
-use std::time::Instant;
 
+/// Creates a commit for a dataset. Payloads are a list of files, uploaded via a multipart form. This list of files includes a commit.json, which contains a Commit struct.
+/// All files are first downloaded to a temporary folder, after which the commit file is parsed, which is used to determine which files should actually be stored in the storage backend.
 #[post("/{dataset}/commit")]
 async fn create_commit_with_data(
     config: web::Data<config::Config>,
@@ -34,8 +36,7 @@ async fn create_commit_with_data(
         .ok_or_else(|| DaemonError::NotFound)?
         .clone();
 
-    // iterate over multipart stream
-    let now = Instant::now();
+    // Store all data from the multipart stream in a tmp folder.
     let temp_path = format!("./.tmp/{}/", utils::create_random_hash());
     fs::create_dir_all(&temp_path).expect("Could not create temporary file directory.");
 
@@ -62,9 +63,6 @@ async fn create_commit_with_data(
             f.write_all(&data).await?;
         }
     }
-
-    debug!("Time to upload file \t{}ms", now.elapsed().as_millis());
-
     // Done uploading. Now parse the commit
 
     // Check whether a branch file is present
@@ -90,7 +88,7 @@ async fn create_commit_with_data(
 
     // Now move the files to the backend
 
-    // Acquire write lock
+    // Acquire write lock to update dataset struct in hashmap.
     {
         let mut datasets_ref = config.datasets.write().unwrap();
         dataset_config.store_committed_files(&commit, temp_path.to_string())?;
@@ -99,6 +97,7 @@ async fn create_commit_with_data(
         std::fs::remove_dir_all(&temp_path)?;
     }
 
+    // Construct response so that the CLI can update its state as well
     let datasets = config.datasets.read().unwrap();
     let vc_dataset = datasets.get(&dataset_path).unwrap();
 
@@ -110,6 +109,7 @@ async fn create_commit_with_data(
     Ok(HttpResponse::Ok().json(response_map))
 }
 
+/// Retrieves a commit from a dataset.
 #[get("/{dataset}/commit/{commit}")]
 async fn get_commit(
     config: web::Data<config::Config>,

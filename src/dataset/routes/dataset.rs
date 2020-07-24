@@ -1,3 +1,5 @@
+//! Routes related to managing branches of a dataset
+
 use crate::config;
 use crate::dataset::DatasetConfig;
 use crate::error::DaemonError;
@@ -6,6 +8,7 @@ use iterum_rust::vc;
 use serde_json::json;
 use vc::Dataset;
 
+/// Create a new dataset based on a provided DatasetConfig
 #[post("/")]
 pub async fn create_dataset(
     config: web::Data<config::Config>,
@@ -15,6 +18,7 @@ pub async fn create_dataset(
     let dataset_config = dataset_config.into_inner();
     let dataset_path = &dataset_config.name;
 
+    // Check whether the dataset does not already exist
     if config.local_config.contains_key(dataset_path).unwrap() {
         return Err(DaemonError::AlreadyExists);
     }
@@ -32,10 +36,12 @@ pub async fn create_dataset(
     Ok(HttpResponse::Ok().json(dataset_config))
 }
 
+/// Retrieve datasets known to the Daemon
 #[get("/")]
 pub async fn get_datasets(config: web::Data<config::Config>) -> Result<HttpResponse, DaemonError> {
     debug!("Retrieving all datasets.");
 
+    // Retrieve from the local kv-store.
     let dataset_names: Vec<String> = config
         .local_config
         .iter()
@@ -48,6 +54,7 @@ pub async fn get_datasets(config: web::Data<config::Config>) -> Result<HttpRespo
     Ok(HttpResponse::Ok().json(json!(dataset_names)))
 }
 
+/// Retrieve datasets known to the Daemon
 #[get("/{dataset}")]
 async fn get_dataset(config: web::Data<config::Config>, path: web::Path<String>) -> Result<HttpResponse, DaemonError> {
     info!("Getting dataset with path {:?}", path);
@@ -62,6 +69,7 @@ async fn get_dataset(config: web::Data<config::Config>, path: web::Path<String>)
     Ok(HttpResponse::Ok().json(&dataset_config))
 }
 
+/// Delete dataset from the daemon. Also removes all data related to this dataset from the storage backend.
 #[delete("/{dataset}")]
 async fn delete_dataset(
     config: web::Data<config::Config>,

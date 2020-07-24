@@ -1,3 +1,4 @@
+//! Contains routes with regards to provenance tracking for pipelines
 use super::helpers::find_dataset_conf_for_pipeline_hash;
 use crate::config;
 use crate::dataset::models::DatasetConfig;
@@ -5,6 +6,7 @@ use crate::error::DaemonError;
 use actix_web::{get, post, web, HttpResponse};
 use iterum_rust::provenance::FragmentLineage;
 
+/// Creates a new FragmentLineage on the storage backend
 #[post("/{dataset}/pipelines/{pipeline_hash}/lineage")]
 async fn post_fragment_lineage(
     config: web::Data<config::Config>,
@@ -29,6 +31,7 @@ async fn post_fragment_lineage(
     Ok(HttpResponse::Ok().finish())
 }
 
+/// Retrieves a list of FragmentLineages from the storage backend
 #[get("/pipelines/{pipeline_hash}/lineage")]
 async fn get_fragment_lineages(
     config: web::Data<config::Config>,
@@ -50,6 +53,7 @@ async fn get_fragment_lineages(
     Ok(HttpResponse::Ok().json(fragment_lineages))
 }
 
+/// Retrieves a specific FragmentLineage from the storage backend
 #[get("/pipelines/{pipeline_hash}/lineage/{fragment_id}")]
 async fn get_fragment_lineage(
     config: web::Data<config::Config>,

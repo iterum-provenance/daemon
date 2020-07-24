@@ -1,3 +1,5 @@
+//! Contains the DatasetConfig struct, which is similar to the idv-config.yaml which the CLI uses.
+
 use crate::backend::Backend;
 use crate::error::DaemonError;
 use iterum_rust::vc::{Commit, Dataset};
@@ -18,6 +20,7 @@ impl From<sled::IVec> for DatasetConfig {
     }
 }
 
+/// The daemon uses this struct to save references to datasets in its local kv-store, so the daemon is able to remember which datasets the user is working with.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DatasetConfig {
     pub name: String,
@@ -27,6 +30,8 @@ pub struct DatasetConfig {
 }
 
 impl DatasetConfig {
+    //! These functions are simply shortcuts to functions in of the storage backend of the DatasetConfig
+
     pub fn store_committed_files(&self, commit: &Commit, path: String) -> Result<(), std::io::Error> {
         self.backend.store_committed_files(self, commit, path)
     }
